@@ -21,6 +21,7 @@ sap.ui.define(
       // ---------------- INITIALIZATION ----------------
       onInit: function () {
         var oRouter = this.getOwnerComponent().getRouter();
+
         oRouter
           .getRoute("object")
           .attachPatternMatched(this._onObjectMatched, this);
@@ -36,7 +37,35 @@ sap.ui.define(
           errorMessage: "",
         });
 
+        // Model for the Enrolled Courses list — the OData V4 List can't
+        // bind to a Collection(Edm.String) directly, so we mirror it here.
         this.getView().setModel(new JSONModel({ items: [] }), "courses");
+      },
+
+      onExit: function () {
+        if (this._pDialog) {
+          this._pDialog.then(function (oDialog) {
+            oDialog.destroy();
+          });
+          this._pDialog = null;
+        }
+
+        if (this._oEditModel) {
+          this._oEditModel.destroy();
+          this._oEditModel = null;
+        }
+
+        if (this._pPdfDialog) {
+          this._pPdfDialog.then(function (oDialog) {
+            oDialog.destroy();
+          });
+          this._pPdfDialog = null;
+        }
+
+        if (this._oPdfModel) {
+          this._oPdfModel.destroy();
+          this._oPdfModel = null;
+        }
       },
 
       _onObjectMatched: function (oEvent) {
@@ -101,22 +130,17 @@ sap.ui.define(
       },
 
       // ---------------- FORMATTERS ----------------
-      formatCourseItem: function (oItem) {
-        return typeof oItem === "string" ? oItem : "";
-      },
-
       formatPdfFrame: function (sUrl) {
-        if (!sUrl) return "";
-        var sSafe = String(sUrl).replace(/"/g, "&quot;");
-        return (
-          '<iframe src="' +
-          sSafe +
-          '" ' +
-          'style="width:100%;height:100%;min-height:600px;border:0;display:block;background:#fff;" ' +
-          'title="PDF Preview">' +
-          "</iframe>"
-        );
-      },
+  if (!sUrl) return "";
+  var sSafe = String(sUrl).replace(/"/g, "&quot;");
+  return (
+    '<iframe src="' + sSafe + '" ' +
+    'style="width:100%;height:100%;min-height:600px;border:0;display:block;background:#fff;" ' +
+    'title="PDF Preview">' +
+    '</iframe>'
+  );
+},
+
       // ---------------- DOCUMENTS SECTION ----------------
       onDocumentPreview: function (oEvent) {
         var oItem = oEvent.getSource();
@@ -404,24 +428,18 @@ sap.ui.define(
         var sUrl = "http://localhost:4004/uploadStudentPicture";
         var oForm = new FormData();
         oForm.append("studentID", sStudentID);
-        oForm.append(
-          "file",
-          oBlob,
-          "picture." + (sMime.split("/")[1] || "jpg"),
-        );
+        oForm.append("file", oBlob, "picture." + (sMime.split("/")[1] || "jpg"));
 
-        return fetch(sUrl, { method: "POST", body: oForm }).then(
-          function (res) {
-            if (!res.ok) {
-              return res.text().then(function (t) {
-                throw new Error(
-                  "Picture upload failed (HTTP " + res.status + "): " + t,
-                );
-              });
-            }
-            return res.json();
-          },
-        );
+        return fetch(sUrl, { method: "POST", body: oForm }).then(function (res) {
+          if (!res.ok) {
+            return res.text().then(function (t) {
+              throw new Error(
+                "Picture upload failed (HTTP " + res.status + "): " + t,
+              );
+            });
+          }
+          return res.json();
+        });
       },
 
       onCancelEdit: function () {
