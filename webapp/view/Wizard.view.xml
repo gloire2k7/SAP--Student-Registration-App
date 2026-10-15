@@ -31,7 +31,6 @@
                     id="step1"
                     title="Personal Info"
                     validated="{wizard>/step1Valid}"
-                    complete=".onStep1Complete"
                 >
                     <form:SimpleForm
                         editable="true"
@@ -85,38 +84,6 @@
                                 valueFormat="yyyy-MM-dd"
                                 displayFormat="medium"
                             />
-
-                            <Label
-                                text="Profile Picture"
-                                required="true"
-                            />
-                            <VBox>
-                                <u:FileUploader
-                                    id="pictureUploader"
-                                    xmlns:u="sap.ui.unified"
-                                    name="picture"
-                                    width="100%"
-                                    placeholder="Choose a picture (max 500 KB)"
-                                    fileType="jpg,png,jpeg"
-                                    buttonText="Choose Picture"
-                                    change=".onPictureChange"
-                                    fileSizeExceed=".onPictureSizeExceed"
-                                    fileSizeLimit="0.5"
-                                />
-
-                                <HBox
-                                    class="sapUiSmallMarginTop"
-                                    alignItems="Center"
-                                >
-                                    <Avatar
-                                        id="picturePreview"
-                                        src="{wizard>/pictureDataUrl}"
-                                        displaySize="S"
-                                        class="sapUiSmallMarginEnd"
-                                    />
-                                    <Text text="{wizard>/pictureFileName}" />
-                                </HBox>
-                            </VBox>
                         </form:content>
                     </form:SimpleForm>
                 </WizardStep>
@@ -144,11 +111,11 @@
                                 id="program"
                                 selectedKey="{wizard>/program}"
                                 change=".validateStep2"
-                                items="{students>/Programs}"
+                                items="{/Programs}"
                             >
                                 <core:Item
-                                    key="{students>code}"
-                                    text="{students>text}"
+                                    key="{code}"
+                                    text="{text}"
                                 />
                             </Select>
 
@@ -201,7 +168,7 @@
                 >
                     <VBox class="sapUiMediumMargin">
                         <Text
-                            text="Tick all documents that have been received:"
+                            text="Tick all documents that have been received and upload the student's transcript PDF."
                             class="sapUiSmallMarginBottom"
                         />
 
@@ -221,9 +188,29 @@
                             select=".validateStep3"
                         />
 
+                        <Label
+                            text="Transcript PDF (required)"
+                            required="true"
+                            class="sapUiMediumMarginTop"
+                        />
+                        <u:FileUploader
+                            id="pdfUploader"
+                            name="pdf"
+                            width="100%"
+                            fileType="pdf"
+                            buttonText="Choose PDF"
+                            placeholder="Choose a PDF (max 10 MB)"
+                            change=".onPdfChange"
+                            typeMissmatch=".onPdfTypeMismatch"
+                        />
+                        <Text
+                            text="{wizard>/pdfFileName}"
+                            class="sapUiSmallMarginTop"
+                        />
+
                         <MessageStrip
                             class="sapUiMediumMarginTop"
-                            text="All three documents must be received before submitting."
+                            text="All documents and the PDF must be provided before continuing."
                             type="Information"
                             showIcon="true"
                         />

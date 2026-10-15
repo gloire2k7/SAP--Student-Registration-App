@@ -1,9 +1,10 @@
 <mvc:View
-  controllerName="student.registration.controller.App"
-  xmlns="sap.m"
-  xmlns:mvc="sap.ui.core.mvc"
-  displayBlock="true">
-  <App id="app">
-    <pages></pages>
-  </App>
+    controllerName="student.registration.controller.App"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
+    height="100%">
+    <App id="app" xmlns="sap.m">
+        <pages></pages>
+    </App>
 </mvc:View>

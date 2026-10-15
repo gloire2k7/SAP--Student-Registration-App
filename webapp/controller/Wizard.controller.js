@@ -23,8 +23,8 @@ sap.ui.define(
           program: "",
           year: "",
           notes: "",
-          pictureDataUrl: "",
-          puictureFileName: "",
+          pdfFileName: "",
+          pdfFile: null,
           docId: false,
           docTranscripts: false,
           docPhoto: false,
@@ -35,69 +35,20 @@ sap.ui.define(
         this.getView().setModel(oModel, "wizard");
       },
 
-      onPictureChange: function (oEvent) {
-        var oFile =
-          oEvent.getParameter("files") && oEvent.getParameter("files")[0];
-        if (!oFile) {
-          return;
-        }
-
-        var MAX_SIZE = 500 * 1024; // 500 KB
-        if (oFile.size > MAX_SIZE) {
-          sap.m.MessageBox.error(
-            "The selected file is " +
-              Math.round(oFile.size / 1024) +
-              " KB. Please choose an image smaller than 500 KB.",
-          );
-          oEvent.getSource().clear();
-          var oWizModel = this.getView().getModel("wizard");
-          oWizModel.setProperty("/pictureDataUrl", "");
-          oWizModel.setProperty("/pictureFileName", "");
-          this.validateStep1();
-          return;
-        }
-
-        var oReader = new FileReader();
-        oReader.onload = function (e) {
-          var oWizModel = this.getView().getModel("wizard");
-          oWizModel.setProperty("/pictureDataUrl", e.target.result);
-          oWizModel.setProperty("/pictureFileName", oFile.name);
-          this.validateStep1();
-        }.bind(this);
-
-        oReader.onerror = function () {
-          sap.m.MessageBox.error("Could not read the selected file.");
-        };
-
-        oReader.readAsDataURL(oFile);
-      },
-
-      onPictureSizeExceed: function (oEvent) {
-        sap.m.MessageBox.error(
-          "File exceeds the maximum size of 500 KB. Please choose a smaller image.",
-        );
-        oEvent.getSource().clear();
-      },
-
-      onPictureSizeExceed: function (oEvent) {
-        sap.m.MessageBox.error(
-          "File exceeds the maximum size. Please choose a smaller image.",
-        );
-        oEvent.getSource().clear();
-      },
-
+      // -------- Step 1: personal info (no picture) --------
       validateStep1: function () {
-        var oModel = this.getView().getModel("wizard");
-        var m = oModel.getData();
-
+        var m = this.getView().getModel("wizard").getData();
         var bEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email || "");
         var bName =
           (m.firstName || "").trim().length > 0 &&
           (m.lastName || "").trim().length > 0;
-        var bPicture = !!m.pictureDataUrl;
 
-        oModel.setProperty("/step1Valid", bName && bEmail && bPicture);
+        this.getView()
+          .getModel("wizard")
+          .setProperty("/step1Valid", bName && bEmail);
       },
+
+      // -------- Step 2: program / year --------
       validateStep2: function () {
         var sProgram = this.byId("program").getSelectedKey();
         var sYear = this.byId("startYear").getSelectedKey();
@@ -106,23 +57,48 @@ sap.ui.define(
           .setProperty("/step2Valid", !!sProgram && !!sYear);
       },
 
-      onStep2Complete: function () {
-        MessageToast.show(
-          "Program selected: " +
-            this.getView().getModel("wizard").getProperty("/program"),
-        );
+      // -------- Step 3: documents + PDF --------
+      onPdfChange: function (oEvent) {
+        var oFile =
+          oEvent.getParameter("files") && oEvent.getParameter("files")[0];
+        if (!oFile) return;
+
+        if (oFile.type !== "application/pdf") {
+          MessageBox.error("Only PDF files are allowed.");
+          oEvent.getSource().clear();
+          this.getView().getModel("wizard").setProperty("/pdfFile", null);
+          this.validateStep3();
+          return;
+        }
+
+        var MAX_PDF = 10 * 1024 * 1024;
+        if (oFile.size > MAX_PDF) {
+          MessageBox.error("PDF exceeds 10 MB.");
+          oEvent.getSource().clear();
+          this.getView().getModel("wizard").setProperty("/pdfFile", null);
+          this.validateStep3();
+          return;
+        }
+
+        this.getView().getModel("wizard").setProperty("/pdfFile", oFile);
+        this.getView().getModel("wizard").setProperty("/pdfFileName", oFile.name);
+        this.validateStep3();
+      },
+
+      onPdfTypeMismatch: function () {
+        MessageBox.error("Only PDF files are allowed.");
       },
 
       validateStep3: function () {
         var m = this.getView().getModel("wizard").getData();
-        var bOk = m.docId && m.docTranscripts && m.docPhoto;
-        this.getView().getModel("wizard").setProperty("/step3Valid", bOk);
+        var bAllDocs = m.docId && m.docTranscripts && m.docPhoto;
+        var bPdf = !!m.pdfFile;
+        this.getView()
+          .getModel("wizard")
+          .setProperty("/step3Valid", bAllDocs && bPdf);
       },
 
-      onStep3Complete: function () {
-        MessageToast.show("Documents verified");
-      },
-
+      // -------- Final submit --------
       onWizardComplete: function () {
         var m = this.getView().getModel("wizard").getData();
 
@@ -131,9 +107,7 @@ sap.ui.define(
           {
             title: "Confirm Submission",
             onClose: (sAction) => {
-              if (sAction !== MessageBox.Action.OK) {
-                return;
-              }
+              if (sAction !== MessageBox.Action.OK) return;
               this._submitRegistration(m);
             },
           },
@@ -141,56 +115,71 @@ sap.ui.define(
       },
 
       _submitRegistration: function (m) {
-        var oModel = this.getView().getModel("students");
-        var oListBinding = oModel.bindList("/Students");
+        var oModel = this.getView().getModel(); // OData V4
+        var oListBinding = oModel.bindList("/Registrations");
 
-        var sNewId = "S" + String(Date.now()).slice(-6);
-
-        oListBinding.create({
-          id: sNewId,
+        var oCtx = oListBinding.create({
           firstName: m.firstName,
           lastName: m.lastName,
           email: m.email,
           program: m.program,
-          year: parseInt(m.year, 10),
-          gpa: 0,
-          status: "Active",
-          enrolledCourses: [],
-          picture: m.pictureDataUrl,
+          year: m.year ? parseInt(m.year, 10) : null,
+          dob: m.dob,
+          notes: m.notes,
+          documentsComplete: true,
         });
 
-        oModel
-          .submitBatch("$auto")
+        oCtx
+          .created()
           .then(
             function () {
-              MessageToast.show(
-                "Student " + sNewId + " registered successfully",
-              );
-              this.getOwnerComponent().getRouter().navTo("list");
+              var sRegID = oCtx.getProperty("ID");
+              return this._uploadPdf(sRegID, m.pdfFile);
+            }.bind(this),
+          )
+          .then(
+            function () {
+              MessageToast.show("Registration submitted for review.");
+              this.getOwnerComponent().getRouter().navTo("worklist", {}, true);
             }.bind(this),
           )
           .catch(function (err) {
-            MessageBox.error("Registration failed: " + (err.message || err));
+            MessageBox.error("Submission failed: " + (err.message || err));
           });
+      },
+
+      _uploadPdf: function (sRegID, oFile) {
+        var sUrl = "http://localhost:4004/uploadAttachment";
+        var oForm = new FormData();
+        oForm.append("registrationID", sRegID);
+        oForm.append("file", oFile, oFile.name);
+
+        return fetch(sUrl, { method: "POST", body: oForm }).then(
+          function (res) {
+            if (!res.ok) {
+              return res.text().then(function (t) {
+                throw new Error(
+                  "PDF upload failed (HTTP " + res.status + "): " + t,
+                );
+              });
+            }
+            return res.json();
+          },
+        );
       },
 
       onCancel: function () {
         MessageBox.confirm("Discard this registration?", {
           onClose: (sAction) => {
-            if (sAction === MessageBox.Action.OK) {
-              this.onNavBack();
-            }
+            if (sAction === MessageBox.Action.OK) this.onNavBack();
           },
         });
       },
 
       onNavBack: function () {
         var sPrev = History.getInstance().getPreviousHash();
-        if (sPrev !== undefined) {
-          window.history.go(-1);
-        } else {
-          this.getOwnerComponent().getRouter().navTo("list", {}, true);
-        }
+        if (sPrev !== undefined) window.history.go(-1);
+        else this.getOwnerComponent().getRouter().navTo("worklist", {}, true);
       },
     });
   },

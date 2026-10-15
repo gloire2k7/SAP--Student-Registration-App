@@ -20,6 +20,30 @@
                 visible="false"
                 class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop"/>
 
+            <!-- Profile picture: OUTSIDE the form -->
+            <HBox alignItems="Center" class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop">
+                <Avatar
+                    id="picturePreview"
+                    src="{edit>/picture}"
+                    displaySize="M"
+                    class="sapUiSmallMarginEnd"
+                    initials="{= (${edit>/firstName} || '').substring(0,1) + (${edit>/lastName} || '').substring(0,1) }"/>
+
+                <VBox>
+                    <u:FileUploader
+                        id="pictureUploaderEdit"
+                        name="picture"
+                        width="20rem"
+                        placeholder="Choose a new picture (max 500 KB)"
+                        fileType="jpg,png,jpeg"
+                        buttonText="Change Picture"
+                        change=".onEditPictureChange"/>
+                    <Text
+                        text="{edit>/pictureFileName}"
+                        class="sapUiSmallMarginTop"/>
+                </VBox>
+            </HBox>
+
             <form:SimpleForm
                 id="studentForm"
                 editable="true"
@@ -33,36 +57,6 @@
                 columnsM="1">
 
                 <form:content>
-                    <!-- ========== Profile Picture ========== -->
-                    <Label text="Profile Picture"/>
-                    <VBox>
-                        <HBox alignItems="Center" class="sapUiSmallMarginBottom">
-                            <Avatar
-                                id="picturePreview"
-                                src="{edit>/picture}"
-                                displaySize="M"
-                                class="sapUiSmallMarginEnd"
-                                initials="{= (${edit>/firstName} || '').substring(0,1) + (${edit>/lastName} || '').substring(0,1) }"/>
-
-                            <VBox>
-                                <u:FileUploader
-                                    id="pictureUploaderEdit"
-                                    name="picture"
-                                    width="20rem"
-                                    placeholder="Choose a new picture (max 500 KB)"
-                                    fileType="jpg,png,jpeg"
-                                    buttonText="Change Picture"
-                                    maximumFileSize="0.5"
-                                    change=".onEditPictureChange"
-                                    fileSizeExceed=".onEditPictureSizeExceed"/>
-                                <Text
-                                    text="{edit>/pictureFileName}"
-                                    class="sapUiSmallMarginTop"/>
-                            </VBox>
-                        </HBox>
-                    </VBox>
-
-                    <!-- ========== Existing fields ========== -->
                     <Label text="First Name" required="true"/>
                     <Input
                         id="firstNameInput"

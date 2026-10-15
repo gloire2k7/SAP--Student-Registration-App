@@ -5,17 +5,16 @@ sap.ui.define(
     "sap/ui/model/FilterOperator",
     "sap/ui/core/Fragment",
     "sap/m/MessageToast",
+    "sap/m/MessageBox",
   ],
-  function (Controller, Filter, FilterOperator, Fragment, MessageToast) {
+  function (Controller, Filter, FilterOperator, Fragment, MessageToast, MessageBox) {
     "use strict";
 
     return Controller.extend("student.registration.controller.List", {
       onInit: function () {
         this._sSearchQuery = "";
         var oRouter = this.getOwnerComponent().getRouter();
-        oRouter
-          .getRoute("list")
-          .attachPatternMatched(this._onListMatched, this);
+        oRouter.getRoute("list").attachPatternMatched(this._onListMatched, this);
       },
 
       onAfterRendering: function () {
@@ -29,12 +28,8 @@ sap.ui.define(
             var iCount = oBinding.getLength();
             var oSnap = this.byId("countSnapped");
             var oExp = this.byId("countExpanded");
-            if (oSnap) {
-              oSnap.setText(iCount + " students");
-            }
-            if (oExp) {
-              oExp.setText(iCount + " students enrolled");
-            }
+            if (oSnap) oSnap.setText(iCount + " students");
+            if (oExp) oExp.setText(iCount + " students enrolled");
           }.bind(this),
         );
 
@@ -61,7 +56,6 @@ sap.ui.define(
           0,
         );
 
-        // ... rest of existing filter-intent logic
         var oFilterIntent = this.getOwnerComponent().getModel("filterIntent");
         if (!oFilterIntent) {
           return;
@@ -75,7 +69,7 @@ sap.ui.define(
         oFilterIntent.setData({});
       },
 
-      // FILTERS
+      // ---------------- FILTERS ----------------
       onSearch: function (oEvent) {
         this._sSearchQuery = oEvent.getParameter("newValue") || "";
         this._applyFilters();
@@ -101,21 +95,9 @@ sap.ui.define(
           aFilters.push(
             new Filter({
               filters: [
-                new Filter(
-                  "firstName",
-                  FilterOperator.Contains,
-                  this._sSearchQuery,
-                ),
-                new Filter(
-                  "lastName",
-                  FilterOperator.Contains,
-                  this._sSearchQuery,
-                ),
-                new Filter(
-                  "email",
-                  FilterOperator.Contains,
-                  this._sSearchQuery,
-                ),
+                new Filter("firstName", FilterOperator.Contains, this._sSearchQuery),
+                new Filter("lastName", FilterOperator.Contains, this._sSearchQuery),
+                new Filter("email", FilterOperator.Contains, this._sSearchQuery),
               ],
               and: false,
             }),
@@ -156,50 +138,37 @@ sap.ui.define(
         oBinding.filter(aFilters);
       },
 
+      // ---------------- ROW PRESS -> OBJECT PAGE ----------------
       onRowPress: function (oEvent) {
-        console.log("[List] Row press event fired");
-
         var oItem = oEvent.getSource();
-        var oContext = oItem.getBindingContext("students");
+        // DEFAULT model — no "students" name
+        var oContext = oItem.getBindingContext();
 
         if (!oContext) {
-          console.error(
-            "[List] No binding context found for model 'students'.",
-            oItem,
-          );
-          sap.m.MessageBox.error(
-            "Could not read the selected student. Check the row binding.",
-          );
+          console.error("[List] No binding context found.", oItem);
+          MessageBox.error("Could not read the selected student.");
           return;
         }
 
-        var sStudentId = oContext.getProperty("id");
+        // The CDS key is "ID" (uppercase)
+        var sStudentId = oContext.getProperty("ID");
+        console.log("[List] Selected student ID:", sStudentId, oContext.getObject());
 
-        console.log("[List] Selected student ID:", sStudentId);
-        console.log("[List] Selected student:", oContext.getObject());
-
-        if (
-          sStudentId === undefined ||
-          sStudentId === null ||
-          sStudentId === ""
-        ) {
-          console.error("[List] Student ID is missing.");
-          sap.m.MessageBox.error("The selected student has no ID.");
+        if (!sStudentId) {
+          MessageBox.error("The selected student has no ID.");
           return;
         }
 
-        var oRouter = this.getOwnerComponent().getRouter();
-
-        console.log("[List] Navigating to object route...");
-
-        oRouter.navTo("object", {
+        this.getOwnerComponent().getRouter().navTo("object", {
           id: String(sStudentId),
         });
       },
 
-      //DELETE
+      // ---------------- DELETE ----------------
       onDeleteStudent: function (oEvent) {
-        var oCtx = oEvent.getSource().getBindingContext("students");
+        var oCtx = oEvent.getSource().getBindingContext();
+        if (!oCtx) return;
+
         var oStudent = oCtx.getObject();
         this._deletingContext = oCtx;
 
@@ -221,7 +190,8 @@ sap.ui.define(
             var oMsg = sap.ui
               .getCore()
               .byId(
-                this.getView().getId() + "--deleteConfirmDialog--deleteMessage",
+                this.getView().getId() +
+                  "--deleteConfirmDialog--deleteMessage",
               );
             if (oMsg) {
               oMsg.setText(
@@ -238,16 +208,14 @@ sap.ui.define(
       },
 
       onConfirmDelete: function () {
-        if (!this._deletingContext) {
-          return;
-        }
+        if (!this._deletingContext) return;
 
         var oCtx = this._deletingContext;
         var oStudent = oCtx.getObject();
-        var oModel = this.getView().getModel("students");
 
-        oModel
-          .delete(oCtx)
+        // Default model, and .delete() on the context
+        oCtx
+          .delete()
           .then(
             function () {
               MessageToast.show(
@@ -260,7 +228,7 @@ sap.ui.define(
             }.bind(this),
           )
           .catch(function (err) {
-            sap.m.MessageBox.error("Delete failed: " + (err.message || err));
+            MessageBox.error("Delete failed: " + (err.message || err));
           });
       },
 
@@ -271,36 +239,43 @@ sap.ui.define(
         this._deletingContext = null;
       },
 
-      //NAVIGATION HELPERS
+      // ---------------- NAVIGATION ----------------
       onRegisterStudent: function () {
         this.getOwnerComponent().getRouter().navTo("wizard");
       },
+
       onGoToWorklist: function () {
         this.getOwnerComponent().getRouter().navTo("worklist");
       },
+
       onGoToOverview: function () {
         this.getOwnerComponent().getRouter().navTo("overview");
       },
+
+      onGoToSmart: function () {
+        this.getOwnerComponent().getRouter().navTo("smart");
+      },
+
+      onNavBack: function () {
+        var sPrev = sap.ui.core.routing.History.getInstance().getPreviousHash();
+        if (sPrev !== undefined) window.history.go(-1);
+        else this.getOwnerComponent().getRouter().navTo("list", {}, true);
+      },
+
+      // ---------------- THEME ----------------
       onThemeChange: function (oEvent) {
         var sKey = oEvent.getParameter("selectedItem").getKey();
         this._applyTheme(sKey);
       },
 
       _applyTheme: function (sKey) {
-        // Apply the theme
         sap.ui.getCore().applyTheme(sKey);
-
-        // Store the preference
         localStorage.setItem("studentApp.theme", sKey);
 
-        // Update the model so the Select reflects the current theme everywhere
         var oThemeModel = this.getOwnerComponent().getModel("theme");
         if (oThemeModel) {
           oThemeModel.setProperty("/current", sKey);
         }
-      },
-      onGoToSmart: function () {
-        this.getOwnerComponent().getRouter().navTo("smart");
       },
     });
   },

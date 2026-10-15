@@ -17,15 +17,16 @@ sap.ui.define(
   ) {
     "use strict";
 
-    // CAP backend origin — where /sample-transcript.pdf is served from.
-    // In Fiori Launchpad / deployed scenarios, replace this with the
-    // destination or the actual CAP host.
-    var CAP_ORIGIN = "http://localhost:4004";
-
     return Controller.extend("student.registration.controller.Worklist", {
       onInit: function () {
-        var oLayoutModel = new JSONModel({ layout: "OneColumn" });
-        this.getView().setModel(oLayoutModel, "layout");
+        this.getView().setModel(
+          new JSONModel({ layout: "OneColumn" }),
+          "layout",
+        );
+        this.getView().setModel(
+          new JSONModel({ hasAttachments: false }),
+          "detail",
+        );
 
         this._oPdfModel = new JSONModel({
           source: "",
@@ -35,38 +36,38 @@ sap.ui.define(
         });
       },
 
-      onAfterRendering: function () {
-        if (this._countListenerAttached) {
-          return;
-        }
+      onNavBack: function () {
+        var sPrev = History.getInstance().getPreviousHash();
+        if (sPrev !== undefined) window.history.go(-1);
+        else this.getOwnerComponent().getRouter().navTo("list", {}, true);
+      },
 
-        var oBinding = this.byId("pendingList").getBinding("items");
-        if (!oBinding) {
-          return;
-        }
+      onRefresh: function () {
+        this.byId("pendingList").getBinding("items").refresh();
+        MessageToast.show("Refreshed");
+      },
 
-        oBinding.attachChange(
-          function () {
-            var iCount = oBinding.getLength();
-            var oSnap = this.byId("pendingCountSnapped");
-            var oExp = this.byId("pendingCountExpanded");
-            if (oSnap) {
-              oSnap.setText(iCount + " pending");
-            }
-            if (oExp) {
-              oExp.setText(iCount + " pending registrations");
-            }
-          }.bind(this),
-        );
+      onNewRegistration: function () {
+        this.getOwnerComponent().getRouter().navTo("wizard");
+      },
 
-        this._countListenerAttached = true;
+      onViewStudents: function () {
+        this.getOwnerComponent().getRouter().navTo("list");
       },
 
       onPendingSelect: function (oEvent) {
         var oItem = oEvent.getParameter("listItem");
-        var oCtx = oItem.getBindingContext("students");
+        var oCtx = oItem.getBindingContext();
+        this.byId("detailPage").setBindingContext(oCtx);
 
-        this.byId("detailPage").setBindingContext(oCtx, "students");
+        var oData = oCtx.getObject() || {};
+        var aAttachments = Array.isArray(oData.attachments)
+          ? oData.attachments
+          : [];
+        this.getView()
+          .getModel("detail")
+          .setProperty("/hasAttachments", aAttachments.length > 0);
+
         this.getView()
           .getModel("layout")
           .setProperty("/layout", "TwoColumnsMidExpanded");
@@ -77,58 +78,46 @@ sap.ui.define(
         this.byId("pendingList").removeSelections(true);
       },
 
-      onNavBack: function () {
-        var sPrev = History.getInstance().getPreviousHash();
-        if (sPrev !== undefined) {
-          window.history.go(-1);
-        } else {
-          this.getOwnerComponent().getRouter().navTo("list", {}, true);
-        }
-      },
-
-      onRefresh: function () {
-        MessageToast.show("Refreshed (no backend yet)");
-      },
-
       onApprove: function () {
-        var oCtx = this.byId("detailPage").getBindingContext("students");
+        var oCtx = this.byId("detailPage").getBindingContext();
         var sName =
           oCtx.getProperty("firstName") + " " + oCtx.getProperty("lastName");
+        var sID = oCtx.getProperty("ID");
 
         MessageBox.confirm("Approve registration for " + sName + "?", {
-          onClose: (sAction) => {
-            if (sAction !== MessageBox.Action.OK) {
-              return;
-            }
-            this._removePending(oCtx, sName + " approved");
-          },
+          onClose: function (sAction) {
+            if (sAction !== MessageBox.Action.OK) return;
+            this._callAction("approveRegistration", sID, sName + " approved");
+          }.bind(this),
         });
       },
 
       onReject: function () {
-        var oCtx = this.byId("detailPage").getBindingContext("students");
+        var oCtx = this.byId("detailPage").getBindingContext();
         var sName =
           oCtx.getProperty("firstName") + " " + oCtx.getProperty("lastName");
+        var sID = oCtx.getProperty("ID");
 
         MessageBox.confirm("Reject registration for " + sName + "?", {
-          onClose: (sAction) => {
-            if (sAction !== MessageBox.Action.OK) {
-              return;
-            }
-            this._removePending(oCtx, sName + " rejected");
-          },
+          onClose: function (sAction) {
+            if (sAction !== MessageBox.Action.OK) return;
+            this._callAction("rejectRegistration", sID, sName + " rejected");
+          }.bind(this),
         });
       },
 
-      _removePending: function (oCtx, sToast) {
-        var oModel = this.getView().getModel("students");
+      _callAction: function (sAction, sID, sToast) {
+        var oModel = this.getView().getModel();
+        var oOperation = oModel.bindContext("/" + sAction + "(...)");
+        oOperation.setParameter("registrationID", sID);
 
-        oModel
-          .delete(oCtx)
+        oOperation
+          .execute()
           .then(
             function () {
-              this.onCloseDetail();
               MessageToast.show(sToast);
+              this.onCloseDetail();
+              this.byId("pendingList").getBinding("items").refresh();
             }.bind(this),
           )
           .catch(function (err) {
@@ -136,90 +125,48 @@ sap.ui.define(
           });
       },
 
-      // -------------------------------------------------------------
-      // PDF Preview
-      // -------------------------------------------------------------
+      // ---------------- PDF Preview ----------------
       onPreviewDocument: function () {
-        var oCtx = this.byId("detailPage").getBindingContext("students");
-        if (!oCtx) {
+        var oCtx = this.byId("detailPage").getBindingContext();
+        if (!oCtx) return;
+
+        var oData = oCtx.getObject() || {};
+        var aAttachments = Array.isArray(oData.attachments)
+          ? oData.attachments
+          : [];
+
+        if (!aAttachments.length) {
+          MessageBox.warning("No document attached.");
           return;
         }
 
-        var sUrl = oCtx.getProperty("documentUrl");
-        if (!sUrl) {
-          MessageBox.warning("This registration has no document attached.");
-          return;
+        this._previewAttachment({ ID: aAttachments[0].ID });
+      },
+
+      onPreviewAttachment: function (oEvent) {
+        var oItem = oEvent.getSource();
+        var oCtx = oItem.getBindingContext();
+        if (!oCtx) return;
+        var oAtt = oCtx.getObject();
+        if (oAtt && oAtt.ID) {
+          this._previewAttachment({ ID: oAtt.ID });
         }
+      },
 
-        // Build the absolute URL (hits CAP, not the UI5 dev server)
-        var sAbsolute =
-          sUrl.indexOf("http://") === 0 || sUrl.indexOf("https://") === 0
-            ? sUrl
-            : CAP_ORIGIN + (sUrl.charAt(0) === "/" ? sUrl : "/" + sUrl);
+      _previewAttachment: function (oAtt) {
+        var sUrl =
+          "http://localhost:4004/odata/Attachments(" + oAtt.ID + ")/content";
 
-        // Reset state
         this._oPdfModel.setData({
-          source: "",
-          loading: true,
+          source: sUrl,
+          loading: false,
           error: false,
           errorMessage: "",
         });
 
-        // Open the dialog
         this._getPdfDialog().then(function (oDialog) {
           oDialog.open();
         });
-
-        // Pre-flight so we can show a real error (404, CORS, not-a-PDF)
-        fetch(sAbsolute, { method: "GET" })
-          .then(function (res) {
-            if (!res.ok) {
-              throw new Error(
-                "Failed to load document (HTTP " +
-                  res.status +
-                  " " +
-                  res.statusText +
-                  ")",
-              );
-            }
-            var sCt = (res.headers.get("content-type") || "").toLowerCase();
-            if (
-              sCt.indexOf("pdf") === -1 &&
-              sCt.indexOf("octet-stream") === -1
-            ) {
-              throw new Error(
-                "The URL did not return a PDF (content-type: " + sCt + ").",
-              );
-            }
-            return res.blob();
-          })
-          .then(
-            function (oBlob) {
-              this._revokeBlobUrl();
-              // Blob URL keeps iframe same-origin → no CORS surprises
-              var sBlobUrl = URL.createObjectURL(oBlob);
-              this._sBlobUrl = sBlobUrl;
-              this._oPdfModel.setData({
-                source: sBlobUrl,
-                loading: false,
-                error: false,
-                errorMessage: "",
-              });
-            }.bind(this),
-          )
-          .catch(
-            function (err) {
-              this._oPdfModel.setData({
-                source: "",
-                loading: false,
-                error: true,
-                errorMessage:
-                  err && err.message
-                    ? err.message
-                    : "The document could not be loaded.",
-              });
-            }.bind(this),
-          );
       },
 
       _getPdfDialog: function () {
@@ -239,11 +186,18 @@ sap.ui.define(
         return this._pPdfDialog;
       },
 
-      onOpenPdfInNewTab: function () {
-        var sSrc = this._oPdfModel.getProperty("/source");
-        if (sSrc) {
-          window.open(sSrc, "_blank");
-        }
+      // Builds the iframe HTML for core:HTML's content property
+      formatPdfFrame: function (sUrl) {
+        if (!sUrl) return "";
+        var sSafe = String(sUrl).replace(/"/g, "&quot;");
+        return (
+          '<iframe src="' +
+          sSafe +
+          '" ' +
+          'style="width:100%;height:100%;min-height:600px;border:0;display:block;background:#fff;" ' +
+          'title="PDF Preview">' +
+          "</iframe>"
+        );
       },
 
       onClosePdfDialog: function () {
@@ -259,17 +213,11 @@ sap.ui.define(
           error: false,
           errorMessage: "",
         });
-        this._revokeBlobUrl();
       },
 
-      _revokeBlobUrl: function () {
-        if (this._sBlobUrl) {
-          URL.revokeObjectURL(this._sBlobUrl);
-          this._sBlobUrl = null;
-        }
-      },
-      formatHasDocument: function (sUrl) {
-        return !!(sUrl && sUrl.length > 0);
+      onOpenPdfInNewTab: function () {
+        var sSrc = this._oPdfModel.getProperty("/source");
+        if (sSrc) window.open(sSrc, "_blank");
       },
     });
   },

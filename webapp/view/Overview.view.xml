@@ -4,10 +4,7 @@
   xmlns:mvc="sap.ui.core.mvc"
   xmlns:f="sap.f"
   xmlns:card="sap.f.cards"
-  xmlns:core="sap.ui.core"
-  xmlns:viz="sap.viz.ui5.controls"
-  xmlns:viz.data="sap.viz.ui5.data"
-  xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds">
+  xmlns:core="sap.ui.core">
 
   <Page
     id="overviewPage"
@@ -21,7 +18,6 @@
           <f:GridContainerSettings rowSize="5rem" columnSize="5rem" gap="1rem"/>
         </f:layout>
 
-        <!-- KPI: Total Students (numeric header, no content area) -->
         <f:Card>
           <f:layoutData>
             <f:GridContainerItemLayoutData columns="4" minRows="2"/>
@@ -38,7 +34,6 @@
           </f:content>
         </f:Card>
 
-        <!-- KPI: Pending (numeric header) -->
         <f:Card>
           <f:layoutData>
             <f:GridContainerItemLayoutData columns="4" minRows="2"/>
@@ -55,7 +50,7 @@
             <Text text="Registrations in queue" class="sapUiSmallMargin"/>
           </f:content>
         </f:Card>
-        <!-- Quick Actions -->
+
         <f:Card>
           <f:layoutData>
             <f:GridContainerItemLayoutData columns="4" minRows="2"/>
@@ -85,7 +80,6 @@
           <f:GridContainerSettings rowSize="5rem" columnSize="5rem" gap="1rem"/>
         </f:layout>
 
-      <!-- Programs list -->
         <f:Card>
           <f:layoutData>
             <f:GridContainerItemLayoutData columns="6" minRows="2"/>
@@ -97,17 +91,15 @@
               iconSrc="sap-icon://education"/>
           </f:header>
           <f:content>
-            <List items="{students>/Programs}" showSeparators="None">
+            <List items="{/Programs}" showSeparators="None">
               <StandardListItem
-                title="{students>text}"
+                title="{text}"
                 type="Active"
                 press=".onProgramPress"/>
             </List>
           </f:content>
         </f:Card>
-        
       </f:GridContainer>
-        
     </content>
   </Page>
 </mvc:View>

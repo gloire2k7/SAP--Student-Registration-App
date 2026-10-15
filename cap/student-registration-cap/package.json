@@ -1,40 +1,31 @@
 {
-  "name": "student-service",
+  "name": "student-registration-cap",
   "version": "1.0.0",
-  "description": "CAP backend for student registration app",
-  "private": true,
+  "description": "Student registration CAP service",
+  "dependencies": {
+    "@sap/cds": "^10"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^3"
+  },
   "scripts": {
     "start": "cds-serve",
     "watch": "cds watch"
-  },
-  "dependencies": {
-    "@cap-js-community/odata-v2-adapter": "^1.16.1",
-    "@sap/cds": "^10.1.1",
-    "express": "^4.19.2"
-  },
-  "devDependencies": {
-    "@cap-js/sqlite": "^3.1.2"
   },
   "cds": {
     "requires": {
       "db": {
         "kind": "sqlite",
-        "credentials": {
-          "url": ":memory:"
-        }
+        "credentials": { "url": "db.sqlite" }
       }
     },
     "server": {
-      "cors": false,
-      "body_parser": {
-        "limit": "10mb"
+      "cors": {
+        "origin": "*",
+        "methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+        "allowedHeaders": "Content-Type,Authorization,Accept,Origin,X-Requested-With",
+        "credentials": false
       }
-    },
-    "odata": {
-      "version": "v4"
-    },
-    "cov2ap": {
-      "targetPath": ""
     }
   }
 }

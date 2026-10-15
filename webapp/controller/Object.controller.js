@@ -18,10 +18,9 @@ sap.ui.define(
     "use strict";
 
     return Controller.extend("student.registration.controller.Object", {
-      //INITIALIZATION
+      // ---------------- INITIALIZATION ----------------
       onInit: function () {
         var oRouter = this.getOwnerComponent().getRouter();
-
         oRouter
           .getRoute("object")
           .attachPatternMatched(this._onObjectMatched, this);
@@ -29,37 +28,30 @@ sap.ui.define(
         this._oEditModel = new JSONModel({});
         this._pDialog = null;
         this._oWorkingCopy = null;
-      },
 
-      onExit: function () {
-        if (this._pDialog) {
-          this._pDialog.then(function (oDialog) {
-            oDialog.destroy();
-          });
+        this._oPdfModel = new JSONModel({
+          source: "",
+          loading: false,
+          error: false,
+          errorMessage: "",
+        });
 
-          this._pDialog = null;
-        }
-
-        if (this._oEditModel) {
-          this._oEditModel.destroy();
-          this._oEditModel = null;
-        }
+        this.getView().setModel(new JSONModel({ items: [] }), "courses");
       },
 
       _onObjectMatched: function (oEvent) {
         var sId = oEvent.getParameter("arguments").id;
         console.log("[Object] Route matched. Student ID:", sId);
 
-        // 1. Bind the element
         this.getView().bindElement({
           path: "/Students('" + sId + "')",
-          model: "students",
+          parameters: {
+            $expand: "registration($expand=attachments)",
+          },
         });
 
-        // 2. Get the element binding and wait for data before flipping layout
         var oView = this.getView();
-        var oBinding = oView.getElementBinding("students");
-
+        var oBinding = oView.getElementBinding();
         if (!oBinding) {
           console.error("[Object] No element binding found");
           return;
@@ -74,34 +66,146 @@ sap.ui.define(
           }
         }
 
-        // If the binding already has data (cached), flip immediately
+        function populateCourses() {
+          var oCtx = oBinding.getBoundContext();
+          if (!oCtx) return;
+          var oData = oCtx.getObject() || {};
+          var aCourses = Array.isArray(oData.enrolledCourses)
+            ? oData.enrolledCourses
+            : [];
+          var aItems = aCourses.map(function (s) {
+            return { name: String(s) };
+          });
+          self.getView().getModel("courses").setData({ items: aItems });
+        }
+
+        function onBindingChange() {
+          var oCtx = oBinding.getBoundContext();
+          if (oCtx && oCtx.getObject()) {
+            flipLayout();
+            populateCourses();
+          } else {
+            oBinding.attachEventOnce("change", onBindingChange);
+          }
+        }
+
         if (
           oBinding.getBoundContext() &&
           oBinding.getBoundContext().getObject()
         ) {
           flipLayout();
+          populateCourses();
         } else {
-          // Otherwise wait for the first data-bearing change
-          oBinding.attachEventOnce("change", function () {
-            var oCtx = oBinding.getBoundContext();
-            if (oCtx && oCtx.getObject()) {
-              flipLayout();
-            } else {
-              // Data not ready yet — wait for the next change
-              oBinding.attachEventOnce("change", flipLayout);
-            }
-          });
+          oBinding.attachEventOnce("change", onBindingChange);
         }
       },
 
-      //FRAGMENT CONTROL LOOKUP
+      // ---------------- FORMATTERS ----------------
+      formatCourseItem: function (oItem) {
+        return typeof oItem === "string" ? oItem : "";
+      },
+
+      formatPdfFrame: function (sUrl) {
+        if (!sUrl) return "";
+        var sSafe = String(sUrl).replace(/"/g, "&quot;");
+        return (
+          '<iframe src="' +
+          sSafe +
+          '" ' +
+          'style="width:100%;height:100%;min-height:600px;border:0;display:block;background:#fff;" ' +
+          'title="PDF Preview">' +
+          "</iframe>"
+        );
+      },
+      // ---------------- DOCUMENTS SECTION ----------------
+      onDocumentPreview: function (oEvent) {
+        var oItem = oEvent.getSource();
+        var oCtx = oItem.getBindingContext();
+        if (!oCtx) return;
+
+        var oAtt = oCtx.getObject();
+        if (!oAtt || !oAtt.ID) return;
+
+        var sUrl =
+          "http://localhost:4004/odata/Attachments(" + oAtt.ID + ")/content";
+
+        this._oPdfModel.setData({
+          source: sUrl,
+          loading: false,
+          error: false,
+          errorMessage: "",
+        });
+
+        this._getPdfDialog().then(function (oDialog) {
+          oDialog.open();
+        });
+      },
+
+      onDocumentDownload: function (oEvent) {
+        var oItem = oEvent.getSource();
+        var oCtx = oItem.getBindingContext();
+        if (!oCtx) return;
+
+        var oAtt = oCtx.getObject();
+        if (!oAtt || !oAtt.ID) return;
+
+        var sUrl =
+          "http://localhost:4004/odata/Attachments(" + oAtt.ID + ")/content";
+
+        var oLink = document.createElement("a");
+        oLink.href = sUrl;
+        oLink.download = oAtt.fileName || "document.pdf";
+        oLink.target = "_blank";
+        document.body.appendChild(oLink);
+        oLink.click();
+        document.body.removeChild(oLink);
+      },
+
+      _getPdfDialog: function () {
+        if (!this._pPdfDialog) {
+          this._pPdfDialog = Fragment.load({
+            id: this.getView().getId(),
+            name: "student.registration.fragment.PdfViewerDialog",
+            controller: this,
+          }).then(
+            function (oDialog) {
+              this.getView().addDependent(oDialog);
+              oDialog.setModel(this._oPdfModel, "pdf");
+              return oDialog;
+            }.bind(this),
+          );
+        }
+        return this._pPdfDialog;
+      },
+
+      onClosePdfDialog: function () {
+        this._getPdfDialog().then(function (oDialog) {
+          oDialog.close();
+        });
+      },
+
+      onAfterClosePdfDialog: function () {
+        this._oPdfModel.setData({
+          source: "",
+          loading: false,
+          error: false,
+          errorMessage: "",
+        });
+      },
+
+      onOpenPdfInNewTab: function () {
+        var sSrc = this._oPdfModel.getProperty("/source");
+        if (sSrc) window.open(sSrc, "_blank");
+      },
+
+      // ---------------- FRAGMENT CONTROL LOOKUP ----------------
       _byFragmentId: function (sLocalId) {
         return Fragment.byId(this.getView().getId(), sLocalId);
       },
 
+      // ---------------- EDIT ----------------
       onEditPress: function () {
-        var oContext = this.getView().getBindingContext("students");
-
+        var oContext = this.getView().getBindingContext();
         if (!oContext) {
           MessageBox.error("No student is selected.");
           return;
@@ -110,7 +214,6 @@ sap.ui.define(
         var oStudent = oContext.getObject();
         var oWorkingCopy = JSON.parse(JSON.stringify(oStudent));
 
-        // Give the picture a friendly label if one already exists
         oWorkingCopy.pictureFileName = oWorkingCopy.picture
           ? "Current picture"
           : "";
@@ -126,7 +229,6 @@ sap.ui.define(
             function (oDialog) {
               this.getView().addDependent(oDialog);
               oDialog.setModel(this._oEditModel, "edit");
-
               return oDialog;
             }.bind(this),
           );
@@ -135,14 +237,12 @@ sap.ui.define(
         this._pDialog.then(
           function (oDialog) {
             this._oEditModel.setData(JSON.parse(JSON.stringify(oWorkingCopy)));
-
             this._clearAllValueStates();
             oDialog.open();
             this._validateForm();
           }.bind(this),
         );
       },
-
 
       onValidateField: function () {
         this._validateForm();
@@ -158,11 +258,8 @@ sap.ui.define(
         var oSaveBtn = this._byFragmentId("saveBtn");
         var oStrip = this._byFragmentId("errorSummary");
 
-        // Fail closed: never allow Save if controls are unavailable.
         if (!oFirst || !oLast || !oEmail || !oYear || !oGpa || !oSaveBtn) {
-          if (oSaveBtn) {
-            oSaveBtn.setEnabled(false);
-          }
+          if (oSaveBtn) oSaveBtn.setEnabled(false);
           return false;
         }
 
@@ -173,7 +270,6 @@ sap.ui.define(
           if (!bFieldValid) {
             oInput.setValueState("Error");
             oInput.setValueStateText(sMessage);
-
             bValid = false;
             iErrors++;
           } else {
@@ -182,7 +278,6 @@ sap.ui.define(
           }
         }
 
-        // Read current input values directly.
         var sFirst = oFirst.getValue().trim();
         var sLast = oLast.getValue().trim();
         var sEmail = oEmail.getValue().trim();
@@ -190,15 +285,10 @@ sap.ui.define(
         var sGpa = oGpa.getValue().trim();
         var sProgram = oProgram ? oProgram.getValue().trim() : "";
 
-        // First name
         validate(oFirst, sFirst.length > 0, "First name is required.");
-
-        // Last name
         validate(oLast, sLast.length > 0, "Last name is required.");
 
-        // Email
         var bEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sEmail);
-
         validate(
           oEmail,
           sEmail.length > 0 && bEmailValid,
@@ -207,55 +297,43 @@ sap.ui.define(
             : "Enter a valid email address, e.g. name@uni.edu.",
         );
 
-        // Year: required integer between 1 and 4
         var iYear = Number(sYear);
-
         validate(
           oYear,
           sYear !== "" && Number.isInteger(iYear) && iYear >= 1 && iYear <= 4,
           "Year must be a whole number from 1 to 4.",
         );
 
-        // GPA: required number between 0 and 4
         var fGpa = Number(sGpa);
-
         validate(
           oGpa,
           sGpa !== "" && Number.isFinite(fGpa) && fGpa >= 0 && fGpa <= 4,
           "GPA must be between 0.0 and 4.0.",
         );
 
-        // Keep the edit model synchronized with the visible controls.
-        // This ensures Save persists the values the user actually entered.
         var oData = this._oEditModel.getData() || {};
-
         oData.firstName = sFirst;
         oData.lastName = sLast;
         oData.email = sEmail;
         oData.year = sYear === "" ? "" : iYear;
         oData.gpa = sGpa === "" ? "" : fGpa;
         oData.program = sProgram;
-
         this._oEditModel.setData(oData);
 
-        // Save is enabled only when every validated field is valid.
         oSaveBtn.setEnabled(bValid);
 
-        // Show the error summary only when there are errors.
         if (oStrip) {
           oStrip.setText(
             iErrors === 1
               ? "1 field needs attention."
               : iErrors + " fields need attention.",
           );
-
           oStrip.setVisible(iErrors > 0);
         }
 
         return bValid;
       },
 
-      //SAVE STUDENT
       onSaveStudent: function () {
         if (!this._validateForm()) {
           MessageBox.error("Please fix the highlighted fields before saving.", {
@@ -264,15 +342,15 @@ sap.ui.define(
           return;
         }
 
-        var oContext = this.getView().getBindingContext("students");
+        var oContext = this.getView().getBindingContext();
         if (!oContext) {
           MessageBox.error("Unable to find the selected student.");
           return;
         }
 
         var oEdited = this._oEditModel.getData();
+        var sStudentID = oContext.getProperty("ID");
 
-        // V4: setProperty on the context queues a PATCH.
         oContext.setProperty("firstName", oEdited.firstName);
         oContext.setProperty("lastName", oEdited.lastName);
         oContext.setProperty("email", oEdited.email);
@@ -280,11 +358,26 @@ sap.ui.define(
         oContext.setProperty("year", oEdited.year);
         oContext.setProperty("gpa", oEdited.gpa);
 
+        var bNewPicture =
+          oEdited.picture &&
+          oEdited.picture !== oContext.getProperty("picture");
+
         this.getView()
-          .getModel("students")
+          .getModel()
           .submitBatch("$auto")
           .then(
             function () {
+              if (bNewPicture) {
+                return this._uploadStudentPicture(sStudentID, oEdited.picture);
+              }
+            }.bind(this),
+          )
+          .then(
+            function () {
+              var oView = this.getView();
+              var oBinding = oView.getElementBinding();
+              if (oBinding) oBinding.refresh();
+
               this._clearAllValueStates();
               this._oWorkingCopy = null;
               this._pDialog.then(function (oDialog) {
@@ -297,26 +390,53 @@ sap.ui.define(
             MessageBox.error("Save failed: " + (err.message || err));
           });
       },
-      // ---------- CANCEL EDIT ----------
+
+      _uploadStudentPicture: function (sStudentID, sDataUrl) {
+        var aParts = sDataUrl.split(",");
+        var sMime = (aParts[0].match(/:(.*?);/) || [null, "image/jpeg"])[1];
+        var sB64 = aParts[1];
+        var sBinary = atob(sB64);
+        var aBytes = new Uint8Array(sBinary.length);
+        for (var i = 0; i < sBinary.length; i++)
+          aBytes[i] = sBinary.charCodeAt(i);
+        var oBlob = new Blob([aBytes], { type: sMime });
+
+        var sUrl = "http://localhost:4004/uploadStudentPicture";
+        var oForm = new FormData();
+        oForm.append("studentID", sStudentID);
+        oForm.append(
+          "file",
+          oBlob,
+          "picture." + (sMime.split("/")[1] || "jpg"),
+        );
+
+        return fetch(sUrl, { method: "POST", body: oForm }).then(
+          function (res) {
+            if (!res.ok) {
+              return res.text().then(function (t) {
+                throw new Error(
+                  "Picture upload failed (HTTP " + res.status + "): " + t,
+                );
+              });
+            }
+            return res.json();
+          },
+        );
+      },
+
       onCancelEdit: function () {
-        if (!this._pDialog) {
-          return;
-        }
+        if (!this._pDialog) return;
 
         this._pDialog.then(
           function (oDialog) {
             this._clearAllValueStates();
-
-            // Discard unsaved changes.
             this._oEditModel.setData({});
             this._oWorkingCopy = null;
-
             oDialog.close();
           }.bind(this),
         );
       },
 
-      // ---------- CLEAR VALIDATION STATES ----------
       _clearAllValueStates: function () {
         [
           "firstNameInput",
@@ -328,7 +448,6 @@ sap.ui.define(
         ].forEach(
           function (sLocalId) {
             var oControl = this._byFragmentId(sLocalId);
-
             if (oControl) {
               oControl.setValueState("None");
               oControl.setValueStateText("");
@@ -337,9 +456,7 @@ sap.ui.define(
         );
 
         var oSaveBtn = this._byFragmentId("saveBtn");
-        if (oSaveBtn) {
-          oSaveBtn.setEnabled(false);
-        }
+        if (oSaveBtn) oSaveBtn.setEnabled(false);
 
         var oStrip = this._byFragmentId("errorSummary");
         if (oStrip) {
@@ -348,27 +465,19 @@ sap.ui.define(
         }
       },
 
-      // ---------- EMAIL ----------
+      // ---------------- EMAIL ----------------
       onEmailPress: function () {
-        var oContext = this.getView().getBindingContext("students");
-
-        if (!oContext) {
-          return;
-        }
+        var oContext = this.getView().getBindingContext();
+        if (!oContext) return;
 
         var sEmail = oContext.getProperty("email");
-
         if (sEmail) {
           window.location.href = "mailto:" + sEmail;
         }
       },
 
+      // ---------------- NAVIGATION ----------------
       onNavBack: function () {
-        var oLayoutModel = this.getOwnerComponent().getModel("layout");
-        if (oLayoutModel) {
-          oLayoutModel.setProperty("/layout", "OneColumn");
-        }
-
         var sPrev = History.getInstance().getPreviousHash();
         if (sPrev !== undefined) {
           window.history.go(-1);
@@ -376,23 +485,20 @@ sap.ui.define(
           this.getOwnerComponent().getRouter().navTo("list", {}, true);
         }
       },
+
       onCloseColumn: function () {
-        var oLayoutModel = this.getOwnerComponent().getModel("layout");
-        if (oLayoutModel) {
-          oLayoutModel.setProperty("/layout", "OneColumn");
-        }
         this.getOwnerComponent().getRouter().navTo("list", {}, true);
       },
+
+      // ---------------- PICTURE UPLOAD IN EDIT DIALOG ----------------
       onEditPictureChange: function (oEvent) {
         var oFile =
           oEvent.getParameter("files") && oEvent.getParameter("files")[0];
-        if (!oFile) {
-          return;
-        }
+        if (!oFile) return;
 
-        var MAX_SIZE = 500 * 1024; // 500 KB
+        var MAX_SIZE = 500 * 1024;
         if (oFile.size > MAX_SIZE) {
-          sap.m.MessageBox.error(
+          MessageBox.error(
             "The selected file is " +
               Math.round(oFile.size / 1024) +
               " KB. Please choose an image smaller than 500 KB.",
@@ -410,18 +516,18 @@ sap.ui.define(
         }.bind(this);
 
         oReader.onerror = function () {
-          sap.m.MessageBox.error("Could not read the selected file.");
+          MessageBox.error("Could not read the selected file.");
         };
 
         oReader.readAsDataURL(oFile);
       },
 
       onEditPictureSizeExceed: function (oEvent) {
-        sap.m.MessageBox.error(
+        MessageBox.error(
           "File exceeds the maximum size of 500 KB. Please choose a smaller image.",
         );
         oEvent.getSource().clear();
-      }
+      },
     });
   },
 );
