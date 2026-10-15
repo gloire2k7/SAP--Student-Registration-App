@@ -1,0 +1,284 @@
+<mvc:View
+    controllerName="student.registration.controller.List"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+>
+    <f:DynamicPage
+        id="listPage"
+        headerExpanded="true"
+    >
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <Title
+                        text="{i18n>listTitle}"
+                        level="H2"
+                    />
+                </f:heading>
+                <f:snappedContent>
+                    <Text
+                        id="countSnapped"
+                        text=""
+                    />
+                </f:snappedContent>
+                <f:expandedContent>
+                    <Text
+                        id="countExpanded"
+                        text=""
+                    />
+                </f:expandedContent>
+                <f:actions>
+                    <Button
+                        text="Register"
+                        type="Emphasized"
+                        icon="sap-icon://add"
+                        press=".onRegisterStudent"
+                    />
+                    <Button
+                        text="Pending"
+                        icon="sap-icon://action"
+                        press=".onGoToWorklist"
+                    />
+                    <Button
+                        text="Dashboard"
+                        icon="sap-icon://home"
+                        press=".onGoToOverview"
+                    />
+                    <Button
+                        text="Smart View"
+                        icon="sap-icon://table-view"
+                        press=".onGoToSmart"
+                    />
+                    <Select
+                        id="themeSelect"
+                        width="12rem"
+                        tooltip="Change theme"
+                        selectedKey="{theme>/current}"
+                        change=".onThemeChange"
+                    >
+                        <core:Item
+                            key="sap_horizon"
+                            text="Horizon (Light)"
+                        />
+                        <core:Item
+                            key="sap_horizon_dark"
+                            text="Horizon (Dark)"
+                        />
+                        <core:Item
+                            key="sap_horizon_hcb"
+                            text="High Contrast Black"
+                        />
+                        <core:Item
+                            key="sap_horizon_hcw"
+                            text="High Contrast White"
+                        />
+                        <core:Item
+                            key="sap_fiori_3"
+                            text="Fiori 3"
+                        />
+                    </Select>
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <f:header>
+            <f:DynamicPageHeader pinnable="true">
+                <VBox class="sapUiSmallMargin">
+                    <SearchField
+                        width="auto"
+                        placeholder="Search by name or email..."
+                        liveChange=".onSearch"
+                    />
+
+                    <HBox
+                        wrap="Wrap"
+                        alignItems="End"
+                        class="sapUiTinyMarginTop"
+                    >
+                        <VBox
+                            class="sapUiSmallMarginEnd sapUiSmallMarginBottom"
+                        >
+                            <Label
+                                text="Program"
+                                labelFor="programFilter"
+                            />
+                            <MultiComboBox
+                                id="programFilter"
+                                width="16rem"
+                                placeholder="All programs"
+                                selectionChange=".onFilterChange"
+                                items="{students>/Programs}"
+                            >
+                                <core:Item
+                                    key="{students>code}"
+                                    text="{students>text}"
+                                />
+                            </MultiComboBox>
+                        </VBox>
+
+                        <VBox
+                            class="sapUiSmallMarginEnd sapUiSmallMarginBottom"
+                        >
+                            <Label
+                                text="Year"
+                                labelFor="yearFilter"
+                            />
+                            <Select
+                                id="yearFilter"
+                                width="10rem"
+                                change=".onFilterChange"
+                            >
+                                <core:Item
+                                    key=""
+                                    text="All years"
+                                />
+                                <core:Item
+                                    key="1"
+                                    text="Year 1"
+                                />
+                                <core:Item
+                                    key="2"
+                                    text="Year 2"
+                                />
+                                <core:Item
+                                    key="3"
+                                    text="Year 3"
+                                />
+                                <core:Item
+                                    key="4"
+                                    text="Year 4"
+                                />
+                            </Select>
+                        </VBox>
+
+                        <VBox
+                            class="sapUiSmallMarginEnd sapUiSmallMarginBottom"
+                        >
+                            <Label
+                                text="Status"
+                                labelFor="statusFilter"
+                            />
+                            <MultiComboBox
+                                id="statusFilter"
+                                width="14rem"
+                                placeholder="All statuses"
+                                selectionChange=".onFilterChange"
+                                items="{students>/Statuses}"
+                            >
+                                <core:Item
+                                    key="{students>code}"
+                                    text="{students>text}"
+                                />
+                            </MultiComboBox>
+                        </VBox>
+
+                        <VBox class="sapUiSmallMarginBottom">
+                            <Label text="" />
+                            <Button
+                                text="Clear All Filters"
+                                type="Emphasized"
+                                icon="sap-icon://filter"
+                                press=".onClearFilters"
+                            />
+                        </VBox>
+                    </HBox>
+                </VBox>
+            </f:DynamicPageHeader>
+        </f:header>
+
+        <f:content>
+            <Table
+                id="studentsTable"
+                items="{
+      path: 'students>/Students',
+      sorter: { path: 'lastName' }
+    }"
+                mode="None"
+                growing="true"
+                growingThreshold="10"
+                noDataText="No students found"
+            >
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <Title
+                            text="Students"
+                            level="H3"
+                        />
+                        <ToolbarSpacer />
+                        <Button
+                            icon="sap-icon://filter"
+                            tooltip="Clear filters"
+                            press=".onClearFilters"
+                        />
+                    </OverflowToolbar>
+                </headerToolbar>
+
+                <columns>
+                    <Column>
+                        <Text text="Name" />
+                    </Column>
+                    <Column>
+                        <Text text="Program" />
+                    </Column>
+                    <Column>
+                        <Text text="Year" />
+                    </Column>
+                    <Column hAlign="End">
+                        <Text text="GPA" />
+                    </Column>
+                    <Column>
+                        <Text text="Status" />
+                    </Column>
+                    <Column
+                        width="8rem"
+                        hAlign="End"
+                    >
+                        <Text text="Actions" />
+                    </Column>
+                </columns>
+
+                <items>
+                    <ColumnListItem
+                        type="Active"
+                        press=".onRowPress"
+                    >
+                        <cells>
+                            <HBox alignItems="Center">
+                                <Avatar
+                                    src="{students>picture}"
+                                    displaySize="XS"
+                                    initials="{= (${students>firstName} || '').substring(0,1) + (${students>lastName} || '').substring(0,1) }"
+                                    class="sapUiTinyMarginEnd"
+                                />
+                                <Text
+                                    text="{students>firstName} {students>lastName}"
+                                />
+                            </HBox>
+                            <Text text="{students>program}" />
+                            <Text text="{students>year}" />
+                            <ObjectNumber number="{students>gpa}" />
+                            <ObjectStatus
+                                text="{students>status}"
+                                state="{= ${students>status} === 'Active' ? 'Success' : 'Information' }"
+                            />
+
+                            <HBox
+                                justifyContent="End"
+                                alignItems="Center"
+                            >
+                                <Button
+                                    icon="sap-icon://delete"
+                                    type="Transparent"
+                                    tooltip="Delete student"
+                                    press=".onDeleteStudent"
+                                />
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

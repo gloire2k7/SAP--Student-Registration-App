@@ -1,0 +1,67 @@
+<mvc:View
+  controllerName="student.registration.controller.Smart"
+  xmlns="sap.m"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns:smartFilterBar="sap.ui.comp.smartfilterbar"
+  xmlns:smartTable="sap.ui.comp.smarttable"
+  xmlns:core="sap.ui.core"
+  displayBlock="true">
+
+  <Page
+    id="smartPage"
+    title="Students (SmartTable)"
+    showNavButton="true"
+    navButtonPress=".onNavBack">
+
+    <content>
+      <smartFilterBar:SmartFilterBar
+        id="smartFilterBar"
+        entitySet="Students"
+        persistencyKey="StudentsFilterKey"
+        useDateRangeType="true">
+        <smartFilterBar:controlConfiguration>
+          <smartFilterBar:ControlConfiguration
+            key="program"
+            visibleInAdvancedArea="true"
+            preventInitialDataFetchInValueHelpDialog="false"/>
+          <smartFilterBar:ControlConfiguration
+            key="year"
+            visibleInAdvancedArea="true"/>
+          <smartFilterBar:ControlConfiguration
+            key="status"
+            visibleInAdvancedArea="true"/>
+          <smartFilterBar:ControlConfiguration
+            key="firstName"
+            visibleInAdvancedArea="true"/>
+          <smartFilterBar:ControlConfiguration
+            key="lastName"
+            visibleInAdvancedArea="true"/>
+        </smartFilterBar:controlConfiguration>
+      </smartFilterBar:SmartFilterBar>
+
+      <smartTable:SmartTable
+        id="smartStudentsTable"
+        entitySet="Students"
+        smartFilterId="smartFilterBar"
+        tableType="ResponsiveTable"
+        useVariantManagement="false"
+        useTablePersonalisation="true"
+        header="Students"
+        showRowCount="true"
+        persistencyKey="StudentsSmartTable"
+        enableAutoBinding="true"
+        initiallyVisibleFields="id,firstName,lastName,email,program,year,gpa,status"
+        class="sapUiSmallMargin">
+        <smartTable:customToolbar>
+          <OverflowToolbar>
+            <ToolbarSpacer/>
+            <Button
+              icon="sap-icon://action-settings"
+              tooltip="Open SmartTable documentation"
+              press=".onInfoPress"/>
+          </OverflowToolbar>
+        </smartTable:customToolbar>
+      </smartTable:SmartTable>
+    </content>
+  </Page>
+</mvc:View>

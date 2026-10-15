@@ -1,0 +1,285 @@
+<mvc:View
+    controllerName="student.registration.controller.Wizard"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:form="sap.ui.layout.form"
+    xmlns:core="sap.ui.core"
+    xmlns:u="sap.ui.unified"
+>
+    <Page
+        id="wizardPage"
+        title="Register New Student"
+        showNavButton="true"
+        navButtonPress=".onNavBack"
+    >
+        <headerContent>
+            <Button
+                icon="sap-icon://sys-cancel"
+                tooltip="Cancel registration"
+                press=".onCancel"
+            />
+        </headerContent>
+
+        <content>
+            <Wizard
+                id="registerWizard"
+                width="70%"
+                class="sapUiMediumMarginTopBottom"
+                complete=".onWizardComplete"
+            >
+                <WizardStep
+                    id="step1"
+                    title="Personal Info"
+                    validated="{wizard>/step1Valid}"
+                    complete=".onStep1Complete"
+                >
+                    <form:SimpleForm
+                        editable="true"
+                        layout="ResponsiveGridLayout"
+                        labelSpanXL="4"
+                        labelSpanL="4"
+                        labelSpanM="4"
+                        labelSpanS="12"
+                        columnsXL="2"
+                        columnsL="2"
+                        columnsM="1"
+                    >
+                        <form:content>
+                            <Label
+                                text="First Name"
+                                required="true"
+                            />
+                            <Input
+                                id="firstName"
+                                value="{wizard>/firstName}"
+                                placeholder="e.g. Aisha"
+                                liveChange=".validateStep1"
+                            />
+
+                            <Label
+                                text="Last Name"
+                                required="true"
+                            />
+                            <Input
+                                id="lastName"
+                                value="{wizard>/lastName}"
+                                placeholder="e.g. Mohammed"
+                                liveChange=".validateStep1"
+                            />
+
+                            <Label
+                                text="Email"
+                                required="true"
+                            />
+                            <Input
+                                id="email"
+                                value="{wizard>/email}"
+                                type="Email"
+                                placeholder="student@uni.edu"
+                                liveChange=".validateStep1"
+                            />
+
+                            <Label text="Date of Birth" />
+                            <DatePicker
+                                value="{wizard>/dob}"
+                                valueFormat="yyyy-MM-dd"
+                                displayFormat="medium"
+                            />
+
+                            <Label
+                                text="Profile Picture"
+                                required="true"
+                            />
+                            <VBox>
+                                <u:FileUploader
+                                    id="pictureUploader"
+                                    xmlns:u="sap.ui.unified"
+                                    name="picture"
+                                    width="100%"
+                                    placeholder="Choose a picture (max 500 KB)"
+                                    fileType="jpg,png,jpeg"
+                                    buttonText="Choose Picture"
+                                    change=".onPictureChange"
+                                    fileSizeExceed=".onPictureSizeExceed"
+                                    fileSizeLimit="0.5"
+                                />
+
+                                <HBox
+                                    class="sapUiSmallMarginTop"
+                                    alignItems="Center"
+                                >
+                                    <Avatar
+                                        id="picturePreview"
+                                        src="{wizard>/pictureDataUrl}"
+                                        displaySize="S"
+                                        class="sapUiSmallMarginEnd"
+                                    />
+                                    <Text text="{wizard>/pictureFileName}" />
+                                </HBox>
+                            </VBox>
+                        </form:content>
+                    </form:SimpleForm>
+                </WizardStep>
+
+                <WizardStep
+                    id="step2"
+                    title="Program &amp; Year"
+                    validated="{wizard>/step2Valid}"
+                    complete=".onStep2Complete"
+                >
+                    <form:SimpleForm
+                        editable="true"
+                        layout="ResponsiveGridLayout"
+                        labelSpanXL="4"
+                        labelSpanL="4"
+                        labelSpanM="4"
+                        labelSpanS="12"
+                    >
+                        <form:content>
+                            <Label
+                                text="Program"
+                                required="true"
+                            />
+                            <Select
+                                id="program"
+                                selectedKey="{wizard>/program}"
+                                change=".validateStep2"
+                                items="{students>/Programs}"
+                            >
+                                <core:Item
+                                    key="{students>code}"
+                                    text="{students>text}"
+                                />
+                            </Select>
+
+                            <Label
+                                text="Starting Year"
+                                required="true"
+                            />
+                            <Select
+                                id="startYear"
+                                selectedKey="{wizard>/year}"
+                                change=".validateStep2"
+                            >
+                                <core:Item
+                                    key=""
+                                    text="Select..."
+                                />
+                                <core:Item
+                                    key="1"
+                                    text="Year 1"
+                                />
+                                <core:Item
+                                    key="2"
+                                    text="Year 2"
+                                />
+                                <core:Item
+                                    key="3"
+                                    text="Year 3"
+                                />
+                                <core:Item
+                                    key="4"
+                                    text="Year 4"
+                                />
+                            </Select>
+
+                            <Label text="Advisor Notes" />
+                            <TextArea
+                                value="{wizard>/notes}"
+                                rows="3"
+                                placeholder="Optional notes for the registrar"
+                            />
+                        </form:content>
+                    </form:SimpleForm>
+                </WizardStep>
+
+                <WizardStep
+                    id="step3"
+                    title="Documents"
+                    validated="{wizard>/step3Valid}"
+                    complete=".onStep3Complete"
+                >
+                    <VBox class="sapUiMediumMargin">
+                        <Text
+                            text="Tick all documents that have been received:"
+                            class="sapUiSmallMarginBottom"
+                        />
+
+                        <CheckBox
+                            text="Government-issued ID"
+                            selected="{wizard>/docId}"
+                            select=".validateStep3"
+                        />
+                        <CheckBox
+                            text="High school transcripts"
+                            selected="{wizard>/docTranscripts}"
+                            select=".validateStep3"
+                        />
+                        <CheckBox
+                            text="Passport photo"
+                            selected="{wizard>/docPhoto}"
+                            select=".validateStep3"
+                        />
+
+                        <MessageStrip
+                            class="sapUiMediumMarginTop"
+                            text="All three documents must be received before submitting."
+                            type="Information"
+                            showIcon="true"
+                        />
+                    </VBox>
+                </WizardStep>
+
+                <WizardStep
+                    id="step4"
+                    title="Review"
+                    validated="true"
+                >
+                    <VBox class="sapUiMediumMargin">
+                        <Title
+                            text="Please confirm the details:"
+                            level="H4"
+                            class="sapUiSmallMarginBottom"
+                        />
+
+                        <form:SimpleForm
+                            editable="false"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="4"
+                            labelSpanL="4"
+                            labelSpanM="4"
+                            labelSpanS="12"
+                        >
+                            <form:content>
+                                <Label text="Name" />
+                                <Text
+                                    text="{= ${wizard>/firstName} + ' ' + ${wizard>/lastName} }"
+                                />
+
+                                <Label text="Email" />
+                                <Text text="{wizard>/email}" />
+
+                                <Label text="Date of Birth" />
+                                <Text text="{wizard>/dob}" />
+
+                                <Label text="Program" />
+                                <Text text="{wizard>/program}" />
+
+                                <Label text="Starting Year" />
+                                <Text text="{wizard>/year}" />
+
+                                <Label text="Notes" />
+                                <Text text="{wizard>/notes}" />
+
+                                <Label text="Documents" />
+                                <Text
+                                    text="{= ${wizard>/docId} &amp;&amp; ${wizard>/docTranscripts} &amp;&amp; ${wizard>/docPhoto} ? 'All received' : 'Incomplete' }"
+                                />
+                            </form:content>
+                        </form:SimpleForm>
+                    </VBox>
+                </WizardStep>
+            </Wizard>
+        </content>
+    </Page>
+</mvc:View>

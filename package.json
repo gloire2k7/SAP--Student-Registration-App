@@ -1,0 +1,16 @@
+{
+  "name": "student-registration",
+  "version": "1.0.0",
+  "description": "Student Registration UI5 Freestyle App",
+  "private": true,
+  "scripts": {
+    "start": "ui5 serve -o index.html",
+    "serve": "ui5 serve",
+    "build": "ui5 build --clean-dest --all"
+  },
+  "devDependencies": {
+    "@sap/cds": "^10.1.1",
+    "@sap/cds-dk": "^10.1.0",
+    "@ui5/cli": "^3.11.14"
+  }
+}

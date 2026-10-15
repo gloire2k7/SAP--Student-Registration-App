@@ -1,0 +1,31 @@
+id;firstName;lastName;email;program;year;gpa;status;enrolledCourses;picture
+S001;Amara;Okafor;amara.okafor@uni.edu;Computer Science;2;3.7;Active;"[""CS201"",""MATH210"",""ENG105""]";https://randomuser.me/api/portraits/men/1.jpg
+S002;Liam;Nguyen;liam.nguyen@uni.edu;Business Administration;1;3.2;Active;"[""BUS101"",""ECON101""]";https://randomuser.me/api/portraits/men/2.jpg
+S003;Sofia;Rossi;sofia.rossi@uni.edu;Mechanical Engineering;3;3.9;Active;"[""ME301"",""PHY202"",""MATH301""]";https://randomuser.me/api/portraits/women/29.jpg
+S004;Kenji;Tanaka;kenji.tanaka@uni.edu;Computer Science;4;3.5;Graduating;"[""CS401"",""CS402""]";https://randomuser.me/api/portraits/men/31.jpg
+S005;Fatima;Al-Hassan;fatima.alhassan@uni.edu;Biology;2;3.8;Active;"[""BIO201"",""CHEM201""]";https://randomuser.me/api/portraits/women/30.jpg
+S006;Noah;Anderson;noah.anderson@uni.edu;Computer Science;1;3.1;Active;"[""CS101"",""MATH101""]";https://randomuser.me/api/portraits/men/32.jpg
+S007;Isabella;Martinez;isabella.martinez@uni.edu;Biology;3;3.6;Active;"[""BIO301"",""CHEM301""]";https://randomuser.me/api/portraits/women/31.jpg
+S008;Ethan;Williams;ethan.williams@uni.edu;Business Administration;2;2.9;Active;"[""BUS201"",""ACC201""]";https://randomuser.me/api/portraits/men/33.jpg
+S009;Olivia;Brown;olivia.brown@uni.edu;Mechanical Engineering;1;3.4;Active;"[""ME101"",""MATH101""]";https://randomuser.me/api/portraits/women/34.jpg
+S010;Yusuf;Ibrahim;yusuf.ibrahim@uni.edu;Computer Science;3;3.3;Active;"[""CS301"",""CS302"",""MATH301""]";https://randomuser.me/api/portraits/men/35.jpg
+S011;Emma;Johansson;emma.johansson@uni.edu;Biology;4;3.9;Graduating;"[""BIO401"",""BIO402""]";https://randomuser.me/api/portraits/women/36.jpg
+S012;Rafael;Silva;rafael.silva@uni.edu;Business Administration;3;3.0;Active;"[""BUS301"",""MKT301""]";https://randomuser.me/api/portraits/men/37.jpg
+S013;Mei;Chen;mei.chen@uni.edu;Computer Science;2;3.8;Active;"[""CS201"",""CS202"",""MATH201""]";https://randomuser.me/api/portraits/women/38.jpg
+S014;Lucas;Pereira;lucas.pereira@uni.edu;Mechanical Engineering;2;2.8;Active;"[""ME201"",""PHY201""]";https://randomuser.me/api/portraits/men/39.jpg
+S015;Aisha;Mohammed;aisha.mohammed@uni.edu;Biology;1;3.5;Active;"[""BIO101"",""CHEM101""]";https://randomuser.me/api/portraits/women/40.jpg
+S016;Daniel;Kim;daniel.kim@uni.edu;Computer Science;4;3.7;Graduating;"[""CS401"",""CS403""]";https://randomuser.me/api/portraits/men/41.jpg
+S017;Charlotte;Dubois;charlotte.dubois@uni.edu;Business Administration;1;3.3;Active;"[""BUS101"",""MKT101""]";https://randomuser.me/api/portraits/women/42.jpg
+S018;Ahmed;Hassan;ahmed.hassan@uni.edu;Mechanical Engineering;3;3.2;Active;"[""ME301"",""ME302""]";https://randomuser.me/api/portraits/men/43.jpg
+S019;Grace;OConnor;grace.oconnor@uni.edu;Biology;2;3.6;Active;"[""BIO201"",""BIO202""]";https://randomuser.me/api/portraits/women/44.jpg
+S020;Hiroshi;Yamamoto;hiroshi.yamamoto@uni.edu;Computer Science;1;3.0;Active;"[""CS101"",""MATH101""]";https://randomuser.me/api/portraits/men/45.jpg
+S021;Mia;Petrov;mia.petrov@uni.edu;Business Administration;4;3.4;Graduating;"[""BUS401"",""BUS402""]";https://randomuser.me/api/portraits/women/46.jpg
+S022;Carlos;Reyes;carlos.reyes@uni.edu;Mechanical Engineering;1;3.1;Active;"[""ME101"",""PHY101""]";https://randomuser.me/api/portraits/men/47.jpg
+S023;Lina;Khan;lina.khan@uni.edu;Biology;3;3.7;Active;"[""BIO301"",""BIO302"",""CHEM301""]";https://randomuser.me/api/portraits/women/48.jpg
+S024;Felix;Schmidt;felix.schmidt@uni.edu;Computer Science;2;3.9;Active;"[""CS201"",""CS203""]";https://randomuser.me/api/portraits/men/49.jpg
+S025;Nadia;Cohen;nadia.cohen@uni.edu;Business Administration;2;3.1;Active;"[""BUS201"",""FIN201""]";https://randomuser.me/api/portraits/women/50.jpg
+S026;Ivan;Novak;ivan.novak@uni.edu;Mechanical Engineering;4;3.5;Graduating;"[""ME401"",""ME402""]";https://randomuser.me/api/portraits/men/51.jpg
+S027;Leila;Rahman;leila.rahman@uni.edu;Biology;1;3.4;Active;"[""BIO101"",""CHEM101""]";https://randomuser.me/api/portraits/women/52.jpg
+S028;Jin;Park;jin.park@uni.edu;Computer Science;3;3.6;Active;"[""CS301"",""CS304"",""MATH301""]";https://randomuser.me/api/portraits/women/53.jpg
+S029;Sophie;Laurent;sophie.laurent@uni.edu;Business Administration;3;3.8;Active;"[""BUS301"",""FIN301""]";https://randomuser.me/api/portraits/women/54.jpg
+S030;Omar;Farouk;omar.farouk@uni.edu;Mechanical Engineering;2;3.3;Active;"[""ME201"",""MATH201""]";https://randomuser.me/api/portraits/men/55.jpg

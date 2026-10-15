@@ -1,0 +1,113 @@
+<mvc:View
+  controllerName="student.registration.controller.Overview"
+  xmlns="sap.m"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns:f="sap.f"
+  xmlns:card="sap.f.cards"
+  xmlns:core="sap.ui.core"
+  xmlns:viz="sap.viz.ui5.controls"
+  xmlns:viz.data="sap.viz.ui5.data"
+  xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds">
+
+  <Page
+    id="overviewPage"
+    title="Registrar Dashboard"
+    showNavButton="true"
+    navButtonPress=".onNavBack">
+
+    <content>
+      <f:GridContainer class="sapUiMediumMarginBeginEnd sapUiMediumMarginTop">
+        <f:layout>
+          <f:GridContainerSettings rowSize="5rem" columnSize="5rem" gap="1rem"/>
+        </f:layout>
+
+        <!-- KPI: Total Students (numeric header, no content area) -->
+        <f:Card>
+          <f:layoutData>
+            <f:GridContainerItemLayoutData columns="4" minRows="2"/>
+          </f:layoutData>
+          <f:header>
+            <card:NumericHeader
+              title="Total Students"
+              subtitle="Currently enrolled"
+              number="{dash>/totalStudents}"
+              iconSrc="sap-icon://employee"/>
+          </f:header>
+          <f:content>
+            <Text text="Active enrolment" class="sapUiSmallMargin"/>
+          </f:content>
+        </f:Card>
+
+        <!-- KPI: Pending (numeric header) -->
+        <f:Card>
+          <f:layoutData>
+            <f:GridContainerItemLayoutData columns="4" minRows="2"/>
+          </f:layoutData>
+          <f:header>
+            <card:NumericHeader
+              title="Pending"
+              subtitle="Awaiting review"
+              number="{dash>/pendingCount}"
+              state="{= ${dash>/pendingCount} > 0 ? 'Critical' : 'Good' }"
+              iconSrc="sap-icon://pending"/>
+          </f:header>
+          <f:content>
+            <Text text="Registrations in queue" class="sapUiSmallMargin"/>
+          </f:content>
+        </f:Card>
+        <!-- Quick Actions -->
+        <f:Card>
+          <f:layoutData>
+            <f:GridContainerItemLayoutData columns="4" minRows="2"/>
+          </f:layoutData>
+          <f:header>
+            <card:Header title="Quick Actions" iconSrc="sap-icon://action"/>
+          </f:header>
+          <f:content>
+            <List showSeparators="None">
+              <StandardListItem
+                title="Register New Student"
+                icon="sap-icon://add-employee"
+                type="Active"
+                press=".onGoToWizard"/>
+              <StandardListItem
+                title="Browse All Students"
+                icon="sap-icon://list"
+                type="Active"
+                press=".onGoToList"/>
+            </List>
+          </f:content>
+        </f:Card>
+      </f:GridContainer>
+
+      <f:GridContainer class="sapUiMediumMarginBeginEnd">
+        <f:layout>
+          <f:GridContainerSettings rowSize="5rem" columnSize="5rem" gap="1rem"/>
+        </f:layout>
+
+      <!-- Programs list -->
+        <f:Card>
+          <f:layoutData>
+            <f:GridContainerItemLayoutData columns="6" minRows="2"/>
+          </f:layoutData>
+          <f:header>
+            <card:Header
+              title="Programs"
+              subtitle="{= ${dash>/programCount} + ' offered' }"
+              iconSrc="sap-icon://education"/>
+          </f:header>
+          <f:content>
+            <List items="{students>/Programs}" showSeparators="None">
+              <StandardListItem
+                title="{students>text}"
+                type="Active"
+                press=".onProgramPress"/>
+            </List>
+          </f:content>
+        </f:Card>
+        
+      </f:GridContainer>
+        
+    </content>
+  </Page>
+</mvc:View>

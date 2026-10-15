@@ -1,0 +1,86 @@
+{
+  "sap.app": {
+    "id": "student.registration",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "title": "{{appTitle}}",
+    "applicationVersion": { "version": "1.0.0" },
+    "dataSources": {
+      "mainService": {
+        "uri": "http://localhost:4004/odata/",
+        "type": "OData",
+        "settings": { "odataVersion": "4.0" }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName": "student.registration.view.App",
+      "type": "XML",
+      "id": "app"
+    },
+    "dependencies": {
+      "minUI5Version": "1.108.0",
+      "libs": {
+        "sap.ui.core": {},
+        "sap.m": {},
+        "sap.f": {},
+        "sap.uxap": {},
+        "sap.ui.comp": {}
+      }
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": { "bundleName": "student.registration.i18n.i18n" }
+      },
+      "students": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true,
+          "groupId": "$auto",
+          "synchronizationMode": "None"
+        }
+      }
+    },
+
+    
+"routing": {
+ "config": {
+  "routerClass": "sap.m.routing.Router",
+  "viewType": "XML",
+  "viewPath": "student.registration.view",
+  "controlId": "app",
+  "controlAggregation": "pages",
+  "async": true
+},
+  "routes": [
+  { "name": "list",     "pattern": "",              "target": "list" },
+  { "name": "object",   "pattern": "student/{id}",  "target": "object" },
+  { "name": "worklist", "pattern": "worklist",      "target": "worklist" },
+  { "name": "wizard",   "pattern": "register",      "target": "wizard" },
+  { "name": "overview", "pattern": "overview",      "target": "overview" },
+  { "name": "smart",    "pattern": "smart",         "target": "smart"}
+],
+  "targets": {
+  "list":     { "viewName": "List",     "viewId": "list",     "viewLevel": 1 },
+  "object":   { "viewName": "Object",   "viewId": "object",   "viewLevel": 2 },
+  "worklist": { "viewName": "Worklist", "viewId": "worklist", "viewLevel": 1 },
+  "wizard":   { "viewName": "Wizard",   "viewId": "wizard",   "viewLevel": 1 },
+  "overview": { "viewName": "Overview", "viewId": "overview", "viewLevel": 1 },
+  "smart":    { "viewName": "Smart",    "viewId": "smart",    "viewLevel": 1}
+}
+}
+  }
+}

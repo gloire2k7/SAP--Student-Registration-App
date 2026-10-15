@@ -1,0 +1,11 @@
+id;firstName;lastName;email;program;year;submittedOn;documentsComplete;notes;documentUrl
+P001;Marcus;Bell;marcus.bell@uni.edu;Computer Science;1;2026-09-28;true;Transfer student from State College. Transcripts attached.;/sample-transcript.pdf
+P002;Priya;Sharma;priya.sharma@uni.edu;Biology;1;2026-09-30;false;Missing high school transcript.;
+P003;Diego;Fernandez;diego.fernandez@uni.edu;Mechanical Engineering;1;2026-10-01;true;Strong math scores. Recommend approval.;/sample-transcript.pdf
+P004;Aisha;Noor;aisha.noor@uni.edu;Business Administration;1;2026-10-02;true;Legacy applicant — sibling currently enrolled.;/sample-transcript.pdf
+P005;Tomas;Silva;tomas.silva@uni.edu;Computer Science;1;2026-10-03;false;Waiting on recommendation letters.;
+P006;Yuki;Tanaka;yuki.tanaka@uni.edu;Mechanical Engineering;1;2026-10-04;true;Excellent portfolio. Priority review.;/sample-transcript.pdf
+P007;Rania;Haddad;rania.haddad@uni.edu;Biology;1;2026-10-05;true;All documents submitted on time.;/sample-transcript.pdf
+P008;Andre;Kowalski;andre.kowalski@uni.edu;Business Administration;1;2026-10-06;false;Passport photo pending upload.;
+P009;Nadia;Ivanova;nadia.ivanova@uni.edu;Computer Science;1;2026-10-07;true;Transfer from community college.;/sample-transcript.pdf
+P010;Samuel;Osei;samuel.osei@uni.edu;Mechanical Engineering;1;2026-10-08;true;Strong references from former teachers.;/sample-transcript.pdf

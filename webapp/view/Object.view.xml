@@ -1,0 +1,200 @@
+<mvc:View
+    controllerName="student.registration.controller.Object"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:uxap="sap.uxap"
+    xmlns:core="sap.ui.core"
+    xmlns:layout="sap.ui.layout"
+    xmlns:form="sap.ui.layout.form"
+>
+    <uxap:ObjectPageLayout
+        id="objectPage"
+        showTitleInHeaderContent="false"
+        alwaysShowContentHeader="false"
+        headerContentPinnable="true"
+        useIconTabBar="true"
+        showAnchorBar="true"
+    >
+        <uxap:headerTitle>
+            <uxap:ObjectPageHeader
+                objectTitle="{students>firstName} {students>lastName}"
+                objectSubtitle="{students>program}"
+                isObjectIconAlwaysVisible="true"
+            >
+                <uxap:actions>
+                    <Button
+                        text="Edit"
+                        icon="sap-icon://edit"
+                        press=".onEditPress"
+                    />
+                    <Button
+                        text="Email"
+                        icon="sap-icon://email"
+                        press=".onEmailPress"
+                    />
+                </uxap:actions>
+            </uxap:ObjectPageHeader>
+        </uxap:headerTitle>
+
+        <uxap:headerContent>
+            <layout:VerticalLayout class="sapUiSmallMargin">
+                <Breadcrumbs
+                    currentLocationText="{students>firstName} {students>lastName}"
+                >
+                    <Link
+                        text="Students"
+                        press=".onNavBack"
+                    />
+                </Breadcrumbs>
+
+                <HBox
+                    alignItems="Center"
+                    class="sapUiSmallMarginTop"
+                >
+                    <Avatar
+                        src="{students>picture}"
+                        displaySize="L"
+                        class="sapUiSmallMarginEnd"
+                        initials="{= (${students>firstName} || '').substring(0,1) + (${students>lastName} || '').substring(0,1) }"
+                    />
+
+                    <layout:VerticalLayout>
+                        <HBox wrap="Wrap">
+                            <ObjectStatus
+                                text="Status: {students>status}"
+                                state="{= ${students>status} === 'Active' ? 'Success' : 'Information' }"
+                                class="sapUiSmallMarginEnd"
+                            />
+                            <ObjectStatus
+                                text="Year {students>year}"
+                                state="Information"
+                                class="sapUiSmallMarginEnd"
+                            />
+                            <ObjectStatus
+                                text="GPA {students>gpa}"
+                                state="{= ${students>gpa} >= 3.5 ? 'Success' : 'Warning' }"
+                                class="sapUiSmallMarginEnd"
+                            />
+                        </HBox>
+                        <Text
+                            text="{students>email}"
+                            class="sapUiSmallMarginTop"
+                        />
+                    </layout:VerticalLayout>
+                </HBox>
+            </layout:VerticalLayout>
+        </uxap:headerContent>
+        <uxap:sections>
+            <uxap:ObjectPageSection
+                title="Personal Information"
+                titleUppercase="false"
+            >
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <form:SimpleForm
+                            editable="false"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="4"
+                            labelSpanL="4"
+                            labelSpanM="4"
+                            labelSpanS="12"
+                            columnsXL="2"
+                            columnsL="2"
+                            columnsM="1"
+                        >
+                            <form:content>
+                                <Label text="Student ID" />
+                                <Text text="{students>id}" />
+
+                                <Label text="First Name" />
+                                <Text text="{students>firstName}" />
+
+                                <Label text="Last Name" />
+                                <Text text="{students>lastName}" />
+
+                                <Label text="Email" />
+                                <Link
+                                    text="{students>email}"
+                                    href="mailto:{students>email}"
+                                />
+
+                                <Label text="Program" />
+                                <Text text="{students>program}" />
+
+                                <Label text="Year" />
+                                <Text text="{students>year}" />
+
+                                <Label text="Status" />
+                                <Text text="{students>status}" />
+                            </form:content>
+                        </form:SimpleForm>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+
+            <uxap:ObjectPageSection
+                title="Academic Performance"
+                titleUppercase="false"
+            >
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <layout:HorizontalLayout>
+                            <GenericTile
+                                header="Current GPA"
+                                subheader="{= ${students>gpa} >= 3.5 ? 'Dean\'s List' : 'Good Standing' }"
+                                class="sapUiSmallMarginEnd"
+                            >
+                                <TileContent unit="of 4.0">
+                                    <NumericContent
+                                        value="{students>gpa}"
+                                        valueColor="{= ${students>gpa} >= 3.5 ? 'Good' : 'Critical' }"
+                                        scale=""
+                                    />
+                                </TileContent>
+                            </GenericTile>
+
+                            <GenericTile
+                                header="Year"
+                                subheader="Currently enrolled"
+                            >
+                                <TileContent unit="of 4">
+                                    <NumericContent
+                                        value="{students>year}"
+                                        valueColor="Neutral"
+                                    />
+                                </TileContent>
+                            </GenericTile>
+                        </layout:HorizontalLayout>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+
+            <uxap:ObjectPageSection
+                title="Enrolled Courses"
+                titleUppercase="false"
+            >
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <Table
+                            items="{students>enrolledCourses}"
+                            noDataText="No courses enrolled"
+                        >
+                            <columns>
+                                <Column>
+                                    <Text text="Course Code" />
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{students>}" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+        </uxap:sections>
+    </uxap:ObjectPageLayout>
+</mvc:View>

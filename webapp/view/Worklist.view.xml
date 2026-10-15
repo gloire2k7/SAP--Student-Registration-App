@@ -1,0 +1,170 @@
+<mvc:View
+    controllerName="student.registration.controller.Worklist"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:f="sap.f"
+    xmlns:layout="sap.ui.layout"
+    xmlns:form="sap.ui.layout.form">
+
+    <f:FlexibleColumnLayout
+        id="worklistFcl"
+        layout="{layout>/layout}"
+        backgroundDesign="Solid">
+
+        <f:beginColumnPages>
+            <f:DynamicPage
+                id="masterPage"
+                headerExpanded="true"
+                toggleHeaderOnTitleClick="false">
+                <f:title>
+                    <f:DynamicPageTitle>
+                        <f:navigationActions>
+                            <Button
+                                icon="sap-icon://nav-back"
+                                type="Transparent"
+                                tooltip="Back"
+                                press=".onNavBack"/>
+                        </f:navigationActions>
+                        <f:heading>
+                            <Title text="Pending Registrations" level="H2"/>
+                        </f:heading>
+                        <f:snappedContent>
+                            <Text id="pendingCountSnapped" text=""/>
+                        </f:snappedContent>
+                        <f:expandedContent>
+                            <Text id="pendingCountExpanded" text=""/>
+                        </f:expandedContent>
+                        <f:actions>
+                            <Button
+                                icon="sap-icon://refresh"
+                                tooltip="Refresh"
+                                type="Transparent"
+                                press=".onRefresh"/>
+                        </f:actions>
+                    </f:DynamicPageTitle>
+                </f:title>
+
+                <f:content>
+                    <List
+                        id="pendingList"
+                        items="{students>/PendingRegistrations}"
+                        mode="SingleSelectMaster"
+                        selectionChange=".onPendingSelect"
+                        noDataText="No pending registrations">
+                        <StandardListItem
+                            title="{students>firstName} {students>lastName}"
+                            description="{students>program}"
+                            info="{students>submittedOn}"
+                            infoState="{= ${students>documentsComplete} ? 'Success' : 'Warning' }"
+                            icon="{= ${students>documentsComplete} ? 'sap-icon://accept' : 'sap-icon://alert' }"
+                            type="Active"/>
+                    </List>
+                </f:content>
+            </f:DynamicPage>
+        </f:beginColumnPages>
+
+        <f:midColumnPages>
+            <f:DynamicPage
+                id="detailPage"
+                headerExpanded="true"
+                toggleHeaderOnTitleClick="false">
+                <f:title>
+                    <f:DynamicPageTitle>
+                        <f:navigationActions>
+                            <Button
+                                icon="sap-icon://nav-back"
+                                type="Transparent"
+                                tooltip="Close detail"
+                                press=".onCloseDetail"/>
+                        </f:navigationActions>
+                        <f:heading>
+                            <Title
+                                text="{students>firstName} {students>lastName}"
+                                level="H2"/>
+                        </f:heading>
+                        <f:expandedContent>
+                            <Text text="{students>program}"/>
+                        </f:expandedContent>
+                    </f:DynamicPageTitle>
+                </f:title>
+
+                <f:header>
+                    <f:DynamicPageHeader pinnable="true">
+                        <HBox wrap="Wrap" class="sapUiSmallMargin" alignItems="Center">
+                            <ObjectStatus
+                                text="Submitted {students>submittedOn}"
+                                state="Information"
+                                class="sapUiSmallMarginEnd"/>
+                            <ObjectStatus
+                                text="{= ${students>documentsComplete} ? 'Documents Complete' : 'Documents Missing' }"
+                                state="{= ${students>documentsComplete} ? 'Success' : 'Warning' }"
+                                class="sapUiSmallMarginEnd"/>
+                            <Button
+                                id="previewDocBtn"
+                                text="Preview Document"
+                                icon="sap-icon://pdf-attachment"
+                                type="Emphasized"
+                                press=".onPreviewDocument"
+                                visible="{path: 'students>documentUrl', formatter: '.formatHasDocument'}"/>
+                        </HBox>
+                    </f:DynamicPageHeader>
+                </f:header>
+
+                <f:content>
+                    <MessageStrip
+                        text="{= ${students>documentsComplete} ? 'All documents received' : 'Missing documents — cannot approve yet' }"
+                        type="{= ${students>documentsComplete} ? 'Success' : 'Warning' }"
+                        showIcon="true"
+                        class="sapUiSmallMargin"/>
+
+                    <form:SimpleForm
+                        editable="false"
+                        layout="ResponsiveGridLayout"
+                        labelSpanXL="4"
+                        labelSpanL="4"
+                        labelSpanM="4"
+                        labelSpanS="12"
+                        class="sapUiSmallMargin">
+                        <form:content>
+                            <Label text="Application ID"/>
+                            <Text text="{students>id}"/>
+
+                            <Label text="Email"/>
+                            <Link text="{students>email}" href="mailto:{students>email}"/>
+
+                            <Label text="Program"/>
+                            <Text text="{students>program}"/>
+
+                            <Label text="Intended Year"/>
+                            <Text text="{students>year}"/>
+
+                            <Label text="Submitted On"/>
+                            <Text text="{students>submittedOn}"/>
+
+                            <Label text="Notes"/>
+                            <Text text="{students>notes}"/>
+                        </form:content>
+                    </form:SimpleForm>
+                </f:content>
+
+                <f:footer>
+                    <OverflowToolbar>
+                        <ToolbarSpacer/>
+                        <Button
+                            text="Reject"
+                            type="Reject"
+                            icon="sap-icon://decline"
+                            press=".onReject"
+                            enabled="{students>documentsComplete}"/>
+                        <Button
+                            text="Approve"
+                            type="Accept"
+                            icon="sap-icon://accept"
+                            press=".onApprove"
+                            enabled="{students>documentsComplete}"/>
+                    </OverflowToolbar>
+                </f:footer>
+            </f:DynamicPage>
+        </f:midColumnPages>
+    </f:FlexibleColumnLayout>
+</mvc:View>
