@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Student registration CAP service",
   "dependencies": {
-    "@sap/cds": "^10"
+    "@sap/cds": "^10",
+    "@sap/hana-client": "^2",
+    "@cap-js/hana": "^3"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^3"
@@ -12,20 +14,38 @@
     "start": "cds-serve",
     "watch": "cds watch"
   },
-  "cds": {
-    "requires": {
-      "db": {
-        "kind": "sqlite",
-        "credentials": { "url": "db.sqlite" }
-      }
-    },
-    "server": {
-      "cors": {
-        "origin": "*",
-        "methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-        "allowedHeaders": "Content-Type,Authorization,Accept,Origin,X-Requested-With",
-        "credentials": false
-      }
+"cds": {
+  "folders": {
+    "app": "app"
+  },
+  "requires": {
+    "db": {
+      "kind": "sqlite",
+      "credentials": { "url": "db.sqlite" }
     }
+  },
+  "server": {
+    "cors": {
+      "origin": "*",
+      "methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+      "allowedHeaders": "Content-Type,Authorization,Accept,Origin,X-Requested-With",
+      "credentials": false
+    }
+  },
+  "[production]": {
+    "requires": {
+      "db": { "kind": "hana" },
+      "auth": { "kind": "dummy" }
+    },
+    "folders": {
+      "app": "app"
+    }
+  },
+  "build": {
+    "tasks": [
+      { "src": "db", "for": "hana" },
+      { "src": "srv", "for": "nodejs" }
+    ]
   }
+}
 }

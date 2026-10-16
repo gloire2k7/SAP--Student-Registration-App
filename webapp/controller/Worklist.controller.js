@@ -155,7 +155,7 @@ sap.ui.define(
 
       _previewAttachment: function (oAtt) {
         var sUrl =
-          "http://localhost:4004/odata/Attachments(" + oAtt.ID + ")/content";
+          "/odata/Attachments(" + oAtt.ID + ")/content";
 
         this._oPdfModel.setData({
           source: sUrl,

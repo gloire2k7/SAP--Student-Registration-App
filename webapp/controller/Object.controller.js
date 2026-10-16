@@ -151,7 +151,7 @@ sap.ui.define(
         if (!oAtt || !oAtt.ID) return;
 
         var sUrl =
-          "http://localhost:4004/odata/Attachments(" + oAtt.ID + ")/content";
+          "/odata/Attachments(" + oAtt.ID + ")/content";
 
         this._oPdfModel.setData({
           source: sUrl,
@@ -174,7 +174,7 @@ sap.ui.define(
         if (!oAtt || !oAtt.ID) return;
 
         var sUrl =
-          "http://localhost:4004/odata/Attachments(" + oAtt.ID + ")/content";
+          "/odata/Attachments(" + oAtt.ID + ")/content";
 
         var oLink = document.createElement("a");
         oLink.href = sUrl;
@@ -425,7 +425,7 @@ sap.ui.define(
           aBytes[i] = sBinary.charCodeAt(i);
         var oBlob = new Blob([aBytes], { type: sMime });
 
-        var sUrl = "http://localhost:4004/uploadStudentPicture";
+        var sUrl = "/uploadStudentPicture";
         var oForm = new FormData();
         oForm.append("studentID", sStudentID);
         oForm.append("file", oBlob, "picture." + (sMime.split("/")[1] || "jpg"));

@@ -2,17 +2,16 @@ console.log("[server.js] file loaded");
 
 const cds = require("@sap/cds");
 const express = require("express");
+const path = require("path");
+const fs = require("fs");
 
 cds.on("bootstrap", (app) => {
   console.log("[server.js] bootstrap — registering routes");
 
-  // CORS
+  // ---------------- CORS ----------------
   app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader(
-      "Access-Control-Expose-Headers",
-      "X-CSRF-Token, OData-Version",
-    );
+    res.setHeader("Access-Control-Expose-Headers", "X-CSRF-Token, OData-Version");
     if (req.method === "OPTIONS") {
       res.setHeader(
         "Access-Control-Allow-Headers",
@@ -28,7 +27,121 @@ cds.on("bootstrap", (app) => {
     next();
   });
 
-  // -------- Student profile picture upload --------
+  // ---------------- Static UI (srv/app/) ----------------
+  const appRoot = path.join(__dirname, "app");
+  if (fs.existsSync(appRoot) && fs.existsSync(path.join(appRoot, "index.html"))) {
+    console.log("[server.js] serving static UI from:", appRoot);
+    app.use((req, res, next) => {
+      if (req.method !== "GET" && req.method !== "HEAD") return next();
+      if (req.path.startsWith("/odata")) return next();
+      if (req.path.startsWith("/uploadStudentPicture")) return next();
+      if (req.path.startsWith("/uploadAttachment")) return next();
+      if (req.path.startsWith("/sample-transcript.pdf")) return next();
+
+      const safePath = req.path === "/" ? "/index.html" : req.path;
+      const filePath = path.join(appRoot, safePath);
+      if (!filePath.startsWith(appRoot)) return next();
+
+      res.sendFile(filePath, (err) => {
+        if (err) {
+          res.sendFile(path.join(appRoot, "index.html"), (e2) => {
+            if (e2) next();
+          });
+        }
+      });
+    });
+  } else {
+    console.log("[server.js] WARNING — no static UI found at", appRoot);
+  }
+
+  // ---------------- POST /uploadAttachment (PDF upload) ----------------
+  console.log("[server.js] registering POST /uploadAttachment");
+
+  app.post(
+    "/uploadAttachment",
+    express.raw({ type: "multipart/form-data", limit: "20mb" }),
+    async (req, res) => {
+      console.log("[server.js] /uploadAttachment hit");
+      try {
+        const db = await cds.connect.to("db");
+
+        const contentType = req.headers["content-type"] || "";
+        const boundaryMatch = contentType.match(/boundary=(.+)$/);
+        if (!boundaryMatch) {
+          return res.status(400).json({ error: "No multipart boundary" });
+        }
+        const parts = splitBuffer(
+          req.body,
+          Buffer.from("--" + boundaryMatch[1]),
+        );
+
+        let fileObj = null;
+        let registrationID = null;
+
+        for (const part of parts) {
+          if (part.length === 0) continue;
+          const headerEnd = part.indexOf("\r\n\r\n");
+          if (headerEnd === -1) continue;
+          const headerText = part.slice(0, headerEnd).toString("utf8");
+          const data = part.slice(headerEnd + 4, part.length - 2);
+
+          const nameMatch = headerText.match(/name="([^"]+)"/);
+          if (!nameMatch) continue;
+          const fieldName = nameMatch[1];
+
+          const filenameMatch = headerText.match(/filename="([^"]*)"/);
+          const mimeMatch = headerText.match(/Content-Type:\s*([^\r\n]+)/i);
+
+          if (filenameMatch) {
+            fileObj = {
+              filename: filenameMatch[1],
+              mimetype: mimeMatch ? mimeMatch[1].trim() : "application/pdf",
+              data,
+            };
+          } else if (fieldName === "registrationID") {
+            registrationID = data.toString("utf8");
+          }
+        }
+
+        if (!fileObj) return res.status(400).json({ error: "No file provided" });
+        if (!registrationID)
+          return res.status(400).json({ error: "No registrationID" });
+
+        // Confirm the registration exists
+        const reg = await db.run(
+          SELECT.one
+            .from("student.registration.Registrations")
+            .where({ ID: registrationID }),
+        );
+        if (!reg) return res.status(404).json({ error: "Registration not found" });
+
+        const attachment = {
+          ID: cds.utils.uuid(),
+          registration_ID: registrationID,
+          fileName: fileObj.filename || "document.pdf",
+          mimeType: fileObj.mimetype || "application/pdf",
+          size: fileObj.data.length,
+          content: fileObj.data,
+        };
+        await db.run(
+          INSERT.into("student.registration.Attachments").entries(attachment),
+        );
+
+        console.log("[server.js] attachment stored:", attachment.ID);
+        res.status(201).json({
+          ID: attachment.ID,
+          fileName: attachment.fileName,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+        });
+      } catch (e) {
+        console.error("[server.js] PDF upload error:", e);
+        res.status(500).json({ error: e.message });
+      }
+    },
+  );
+
+  // ---------------- POST /uploadStudentPicture ----------------
   console.log("[server.js] registering POST /uploadStudentPicture");
 
   app.post(
@@ -80,7 +193,6 @@ cds.on("bootstrap", (app) => {
         if (!fileObj) return res.status(400).json({ error: "No picture" });
         if (!studentID) return res.status(400).json({ error: "No studentID" });
 
-        // Store as a data URL in the `picture` column
         const dataUrl =
           "data:" +
           fileObj.mimetype +
@@ -101,7 +213,8 @@ cds.on("bootstrap", (app) => {
       }
     },
   );
-  // $batch body limit
+
+  // ---------------- $batch body limits ----------------
   app.use(express.json({ limit: "20mb" }));
   app.use(express.urlencoded({ limit: "20mb", extended: true }));
   app.use(express.text({ limit: "20mb", type: "text/*" }));
@@ -121,7 +234,7 @@ function splitBuffer(buf, sep) {
 
 cds.on("served", async () => {
   try {
-    await require("../db/data-init")();
+    await require("./data-init")();
   } catch (e) {
     console.error("[data-init] failed:", e.message);
   }

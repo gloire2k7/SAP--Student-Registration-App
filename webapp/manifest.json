@@ -3,7 +3,7 @@
     "id": "student.registration",
     "dataSources": {
       "mainService": {
-        "uri": "http://localhost:4004/odata/",
+        "uri": "/odata/",
         "type": "OData",
         "settings": {
           "odataVersion": "4.0"

@@ -149,7 +149,7 @@ sap.ui.define(
       },
 
       _uploadPdf: function (sRegID, oFile) {
-        var sUrl = "http://localhost:4004/uploadAttachment";
+        var sUrl = "/uploadAttachment";
         var oForm = new FormData();
         oForm.append("registrationID", sRegID);
         oForm.append("file", oFile, oFile.name);

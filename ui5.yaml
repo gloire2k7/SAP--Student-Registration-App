@@ -13,3 +13,15 @@ framework:
     - name: sap.ui.layout
     - name: sap.ui.comp
     - name: themelib_sap_horizon
+server:
+  customMiddleware:
+    - name: fiori-tools-proxy
+      afterMiddleware: compression
+      configuration:
+        backend:
+          - path: /odata
+            url: http://localhost:4004
+          - path: /uploadAttachment
+            url: http://localhost:4004
+          - path: /uploadStudentPicture
+            url: http://localhost:4004

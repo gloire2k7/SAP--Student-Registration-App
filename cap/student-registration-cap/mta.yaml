@@ -1,0 +1,45 @@
+_schema-version: "3.1"
+ID: student-registration
+version: 1.0.5
+description: Student Registration — CAP with UI served statically
+
+parameters:
+  enable-parallel-deployments: true
+
+modules:
+
+  - name: student-registration-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 512M
+      disk-quota: 1024M
+      command: npm start
+    build-parameters:
+      builder: custom
+      commands:
+        - npm ci --omit=dev
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: student-registration-db
+
+  - name: student-registration-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 256M
+    requires:
+      - name: student-registration-db
+
+resources:
+
+  - name: student-registration-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
